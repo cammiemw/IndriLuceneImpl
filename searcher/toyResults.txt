@@ -1,0 +1,9 @@
+1 Q0 Doc2 1 -3.4031415 lucene
+1 Q0 Doc8 2 -3.4192123 lucene
+1 Q0 Doc11 3 -3.4196258 lucene
+1 Q0 Doc12 4 -3.4196258 lucene
+1 Q0 Doc5 5 -3.4207592 lucene
+1 Q0 Doc9 6 -3.421255 lucene
+1 Q0 Doc4 7 -3.4232354 lucene
+1 Q0 Doc3 8 -3.4257054 lucene
+1 Q0 Doc7 9 -3.426199 lucene

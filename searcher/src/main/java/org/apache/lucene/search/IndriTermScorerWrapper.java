@@ -1,0 +1,47 @@
+package org.apache.lucene.search;
+
+import java.io.IOException;
+
+import org.apache.lucene.search.similarities.Similarity;
+
+public class IndriTermScorerWrapper extends Scorer implements SmoothingScorer, WeightedScorer {
+
+	private final Scorer termScorer;
+	private final Similarity.SimScorer docScorer;
+	private final float boost;
+
+	protected IndriTermScorerWrapper(Weight weight, Similarity.SimScorer docScorer, Scorer termScorer, float boost) {
+		super(weight);
+		this.docScorer = docScorer;
+		this.termScorer = termScorer;
+		this.boost = boost;
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public float smoothingScore(DisiWrapper topList, int docId) throws IOException {
+		return docScorer.score(docId, 0);
+	}
+
+	@Override
+	public int docID() {
+		int docId = termScorer.docID();
+		return docId;
+	}
+
+	@Override
+	public float score() throws IOException {
+		return termScorer.score();
+	}
+
+	@Override
+	public DocIdSetIterator iterator() {
+		return termScorer.iterator();
+	}
+
+	@Override
+	public float getBoost() {
+		return this.boost;
+	}
+
+}

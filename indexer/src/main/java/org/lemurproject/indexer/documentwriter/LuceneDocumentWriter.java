@@ -1,0 +1,112 @@
+/*
+ * ===============================================================================================
+ * Copyright (c) 2017 Carnegie Mellon University and University of Massachusetts. All Rights
+ * Reserved.
+ *
+ * Use of the Lemur Toolkit for Language Modeling and Information Retrieval is subject to the terms
+ * of the software license set forth in the LICENSE file included with this software, and also
+ * available at http://www.lemurproject.org/license.html
+ *
+ * ================================================================================================
+ */
+package org.lemurproject.indexer.documentwriter;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.search.similarities.LMDirichletSimilarity;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.lemurproject.indexer.domain.IndexingConfiguration;
+import org.lemurproject.indexer.domain.ParsedDocument;
+import org.lemurproject.indexer.domain.ParsedDocumentField;
+import org.lemurproject.indexer.factory.ConfigurableAnalyzerFactory;
+
+public class LuceneDocumentWriter implements DocumentWriter {
+
+	private static final Logger logger = Logger.getLogger(LuceneDocumentWriter.class.getName());
+
+	private Analyzer analyzer;
+	private IndexWriter iWriter;
+	private FieldType fieldType;
+
+	public LuceneDocumentWriter(IndexingConfiguration options)
+			throws IOException, ClassCastException, ClassNotFoundException {
+		ConfigurableAnalyzerFactory analyzerFactory = new ConfigurableAnalyzerFactory();
+		analyzer = analyzerFactory.getConfigurableAnalyzer(options);
+
+		String indexDirectory = Paths.get(options.getIndexDirectory(), options.getIndexName()).toString();
+		iWriter = createIndexWriter(indexDirectory, analyzer);
+
+		fieldType = getFieldType();
+	}
+
+	/**
+	 * Creates the Lucene IndexWriter for writing document to the index.
+	 * 
+	 * @param indexDirectory
+	 * @param docParser
+	 * @param analyzer
+	 * @return
+	 * @throws IOException
+	 */
+	private IndexWriter createIndexWriter(String indexDirectory, Analyzer analyzer) throws IOException {
+
+		Path path = Paths.get(indexDirectory);
+		Directory directory = FSDirectory.open(path);
+
+		IndexWriterConfig config = new IndexWriterConfig(analyzer);
+		config.setOpenMode(OpenMode.CREATE);
+		config.setSimilarity(new LMDirichletSimilarity());
+		IndexWriter iwriter = new IndexWriter(directory, config);
+
+		return iwriter;
+	}
+
+	/**
+	 * Defines how fields are stored in Lucene.
+	 * 
+	 * @return
+	 */
+	private FieldType getFieldType() {
+		logger.log(Level.FINE, "Enter");
+		FieldType fieldType = new FieldType();
+		fieldType.setTokenized(true);
+		fieldType.setStored(true);
+		fieldType.setIndexOptions(org.apache.lucene.index.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+		fieldType.setStoreTermVectors(true);
+		fieldType.setStoreTermVectorPositions(true);
+		fieldType.setStoreTermVectorOffsets(true);
+		logger.log(Level.FINE, "Exit");
+		return fieldType;
+	}
+
+	public void writeDocuments(ParsedDocument parsedDoc) throws IOException {
+		if (parsedDoc != null) {
+			Document luceneDoc = new Document();
+
+			// Add document to search engine
+			for (ParsedDocumentField docField : parsedDoc.getDocumentFields()) {
+				if (docField.getContent() != null) {
+					luceneDoc.add(new Field(docField.getFieldName(), docField.getContent(), fieldType));
+				}
+			}
+			iWriter.addDocument(luceneDoc);
+		}
+	}
+
+	public void closeDocumentWriter() throws IOException {
+		iWriter.close();
+	}
+
+}
