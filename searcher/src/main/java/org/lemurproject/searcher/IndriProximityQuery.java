@@ -6,16 +6,24 @@ import java.util.List;
 
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.IndriWeight;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Weight;
 
-public class IndriQuery extends Query implements Iterable<BooleanClause> {
-	private List<BooleanClause> clauses; // used for toString() and getClauses()
+public abstract class IndriProximityQuery extends Query implements Iterable<BooleanClause> {
 
-	public IndriQuery(List<BooleanClause> clauses) {
+	private final int distance;
+	private final String field;
+	private List<BooleanClause> clauses;
+
+	public IndriProximityQuery(List<BooleanClause> clauses, String field, int distance) {
 		this.clauses = clauses;
+		this.distance = distance;
+		this.field = field;
 	}
+
+	@Override
+	public abstract Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException;
 
 	@Override
 	public String toString(String field) {
@@ -36,14 +44,20 @@ public class IndriQuery extends Query implements Iterable<BooleanClause> {
 	}
 
 	@Override
-	public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
-		IndriQuery query = this;
-		return new IndriWeight(query, searcher, needsScores, boost);
-	}
-
-	@Override
 	public Iterator<BooleanClause> iterator() {
 		return clauses.iterator();
+	}
+
+	public int getDistance() {
+		return this.distance;
+	}
+
+	public String getField() {
+		return this.field;
+	}
+
+	public List<BooleanClause> getClauses() {
+		return this.clauses;
 	}
 
 }

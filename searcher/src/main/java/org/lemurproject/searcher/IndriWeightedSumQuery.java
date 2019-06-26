@@ -8,6 +8,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.IndriWeightedSum;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Weight;
 
 public class IndriWeightedSumQuery extends Query implements Iterable<BooleanClause> {
@@ -36,9 +37,9 @@ public class IndriWeightedSumQuery extends Query implements Iterable<BooleanClau
 	}
 
 	@Override
-	public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+	public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
 		IndriWeightedSumQuery query = this;
-		return new IndriWeightedSum(query, searcher, needsScores, boost);
+		return new IndriWeightedSum(query, searcher, scoreMode, boost);
 	}
 
 	@Override

@@ -14,6 +14,7 @@ package org.lemurproject.indexer.documentwriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,16 +22,19 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
-import org.apache.lucene.search.similarities.LMDirichletSimilarity;
+import org.apache.lucene.search.similarities.IndriDirichletSimilarity;
+import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.lemurproject.indexer.domain.IndexingConfiguration;
 import org.lemurproject.indexer.domain.ParsedDocument;
 import org.lemurproject.indexer.domain.ParsedDocumentField;
 import org.lemurproject.indexer.factory.ConfigurableAnalyzerFactory;
+import org.lemurproject.searcher.domain.IndriConstants;
 
 public class LuceneDocumentWriter implements DocumentWriter {
 
@@ -39,11 +43,13 @@ public class LuceneDocumentWriter implements DocumentWriter {
 	private Analyzer analyzer;
 	private IndexWriter iWriter;
 	private FieldType fieldType;
+	private Similarity similarity;
 
 	public LuceneDocumentWriter(IndexingConfiguration options)
 			throws IOException, ClassCastException, ClassNotFoundException {
 		ConfigurableAnalyzerFactory analyzerFactory = new ConfigurableAnalyzerFactory();
 		analyzer = analyzerFactory.getConfigurableAnalyzer(options);
+		this.similarity = new IndriDirichletSimilarity();
 
 		String indexDirectory = Paths.get(options.getIndexDirectory(), options.getIndexName()).toString();
 		iWriter = createIndexWriter(indexDirectory, analyzer);
@@ -67,7 +73,7 @@ public class LuceneDocumentWriter implements DocumentWriter {
 
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE);
-		config.setSimilarity(new LMDirichletSimilarity());
+		config.setSimilarity(similarity);
 		IndexWriter iwriter = new IndexWriter(directory, config);
 
 		return iwriter;
@@ -98,7 +104,13 @@ public class LuceneDocumentWriter implements DocumentWriter {
 			// Add document to search engine
 			for (ParsedDocumentField docField : parsedDoc.getDocumentFields()) {
 				if (docField.getContent() != null) {
-					luceneDoc.add(new Field(docField.getFieldName(), docField.getContent(), fieldType));
+					if (!docField.isNumeric()) {
+						Field luceneField = new Field(docField.getFieldName(), docField.getContent(), fieldType);
+						luceneDoc.add(luceneField);
+					} else {
+						luceneDoc.add(new NumericDocValuesField(docField.getFieldName(),
+								Long.valueOf(docField.getContent()).longValue()));
+					}
 				}
 			}
 			iWriter.addDocument(luceneDoc);
@@ -106,7 +118,20 @@ public class LuceneDocumentWriter implements DocumentWriter {
 	}
 
 	public void closeDocumentWriter() throws IOException {
+		writeTotalDocLens();
 		iWriter.close();
+	}
+
+	private void writeTotalDocLens() throws IOException {
+		Map<String, Long> docLens = ((IndriDirichletSimilarity) similarity).getTotalFieldLengths();
+		Document docLenDoc = new Document();
+		Field nameField = new Field(IndriConstants.COLLECTION_TOTAL_DOCUMENT_NAME,
+				IndriConstants.COLLECTION_TOTAL_DOCUMENT_NAME, fieldType);
+		docLens.forEach((fieldName, length) -> {
+			Field field = new NumericDocValuesField(fieldName + IndriConstants.FIELD_TOTAL_SUFFIX, length);
+			docLenDoc.add(field);
+		});
+		iWriter.addDocument(docLenDoc);
 	}
 
 }

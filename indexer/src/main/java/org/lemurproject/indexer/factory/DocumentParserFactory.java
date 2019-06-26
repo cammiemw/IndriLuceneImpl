@@ -21,6 +21,8 @@ import org.lemurproject.indexer.documentparser.Gov2DocumentParser;
 import org.lemurproject.indexer.documentparser.JsonDocumentParser;
 import org.lemurproject.indexer.documentparser.TextDocumentParser;
 import org.lemurproject.indexer.documentparser.WSJDocumentParser;
+import org.lemurproject.indexer.documentparser.WashingtonPostDocumentParser;
+import org.lemurproject.indexer.domain.IndexingConfiguration;
 
 /**
  * Instantiates the correct document parser based on the user input for
@@ -41,6 +43,7 @@ public class DocumentParserFactory {
 		docParserMap.put("wsj", WSJDocumentParser.class);
 		docParserMap.put("gov2", Gov2DocumentParser.class);
 		docParserMap.put("json", JsonDocumentParser.class);
+		docParserMap.put("wapo", WashingtonPostDocumentParser.class);
 		// docParserMap.put("webcrawler", WebCrawlerDocumentParser.class);
 	}
 
@@ -48,15 +51,15 @@ public class DocumentParserFactory {
 		return docParserMap.keySet();
 	}
 
-	public DocumentParser getDocumentParser(String documentFormatString, String dataDirectory)
+	public DocumentParser getDocumentParser(IndexingConfiguration options)
 			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
 			NoSuchMethodException, SecurityException {
-		Class<? extends DocumentParser> clazz = docParserMap.get(documentFormatString);
+		Class<? extends DocumentParser> clazz = docParserMap.get(options.getDocumentFormat());
 		DocumentParser docParser = null;
 		if (clazz != null) {
-			docParser = clazz.getDeclaredConstructor(String.class).newInstance(dataDirectory);
+			docParser = clazz.getDeclaredConstructor(IndexingConfiguration.class).newInstance(options);
 		} else {
-			System.out.println("ERROR: No such document parser: " + documentFormatString);
+			System.out.println("ERROR: No such document parser: " + options.getDocumentFormat());
 			System.out.println("Please define one of these parser types: " + getDocumentFormatTypes());
 			throw new IllegalArgumentException();
 		}

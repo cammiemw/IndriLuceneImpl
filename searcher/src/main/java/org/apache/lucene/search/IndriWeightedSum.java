@@ -13,23 +13,23 @@ import org.lemurproject.searcher.IndriWeightedSumQuery;
 
 public class IndriWeightedSum extends Weight {
 	/** The Similarity implementation. */
-	final Similarity similarity;
-	final IndriWeightedSumQuery query;
+	private final Similarity similarity;
+	private final IndriWeightedSumQuery query;
 
-	final ArrayList<Weight> weights;
-	final boolean needsScores;
-	final float boost;
+	private final ArrayList<Weight> weights;
+	private final ScoreMode scoreMode;
+	private final float boost;
 
-	public IndriWeightedSum(IndriWeightedSumQuery query, IndexSearcher searcher, boolean needsScores, float boost)
+	public IndriWeightedSum(IndriWeightedSumQuery query, IndexSearcher searcher, ScoreMode scoreMode, float boost)
 			throws IOException {
 		super(query);
 		this.query = query;
 		this.boost = boost;
-		this.needsScores = needsScores;
-		this.similarity = searcher.getSimilarity(needsScores);
+		this.scoreMode = scoreMode;
+		this.similarity = searcher.getSimilarity();
 		weights = new ArrayList<>();
 		for (BooleanClause c : query) {
-			Weight w = searcher.createWeight(c.getQuery(), needsScores && c.isScoring(), boost);
+			Weight w = searcher.createWeight(c.getQuery(), scoreMode, boost);
 			weights.add(w);
 		}
 	}
@@ -52,14 +52,7 @@ public class IndriWeightedSum extends Weight {
 		return null;
 	}
 
-	@Override
-	public Scorer scorer(LeafReaderContext context) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public BulkScorer bulkScorer(LeafReaderContext context) throws IOException {
+	private Scorer getScorer(LeafReaderContext context) throws IOException {
 		List<Scorer> subScorers = new ArrayList<>();
 		Iterator<BooleanClause> cIter = query.iterator();
 		for (Weight w : weights) {
@@ -69,13 +62,30 @@ public class IndriWeightedSum extends Weight {
 				subScorers.add(scorer);
 			}
 		}
+		if (subScorers.isEmpty()) {
+			return null;
+		}
 
 		Scorer scorer = subScorers.get(0);
 		if (subScorers.size() > 1) {
-			scorer = new IndriWeightedSumScorer(this, subScorers, true);
+			scorer = new IndriWeightedSumScorer(this, subScorers, scoreMode);
 		}
-		BulkScorer bulkScorer = new DefaultBulkScorer(scorer);
-		return bulkScorer;
+		return scorer;
+	}
+
+	@Override
+	public Scorer scorer(LeafReaderContext context) throws IOException {
+		return getScorer(context);
+	}
+
+	@Override
+	public BulkScorer bulkScorer(LeafReaderContext context) throws IOException {
+		Scorer scorer = getScorer(context);
+		if (scorer != null) {
+			BulkScorer bulkScorer = new DefaultBulkScorer(scorer);
+			return bulkScorer;
+		}
+		return null;
 	}
 
 }

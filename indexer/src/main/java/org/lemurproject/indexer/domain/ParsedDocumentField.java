@@ -29,7 +29,8 @@ public class ParsedDocumentField extends BaseObject implements Serializable {
 
 	private String fieldName;
 	private String content;
-	private boolean annotatable;
+	private boolean numeric;
+	private long length;
 
 	public ParsedDocumentField() {
 
@@ -40,11 +41,11 @@ public class ParsedDocumentField extends BaseObject implements Serializable {
 	 * @param content
 	 * @param annotatable
 	 */
-	public ParsedDocumentField(String fieldName, String content, boolean annotatable) {
+	public ParsedDocumentField(String fieldName, String content, boolean numeric) {
 		super();
 		this.fieldName = fieldName;
 		this.content = content;
-		this.annotatable = annotatable;
+		this.numeric = numeric;
 	}
 
 	public String getContent() {
@@ -69,18 +70,20 @@ public class ParsedDocumentField extends BaseObject implements Serializable {
 		this.fieldName = fieldName;
 	}
 
-	/**
-	 * @return the annotatable
-	 */
-	public boolean isAnnotatable() {
-		return annotatable;
+	public boolean isNumeric() {
+		return numeric;
 	}
 
-	/**
-	 * @param annotatable the annotatable to set
-	 */
-	public void setAnnotatable(boolean annotatable) {
-		this.annotatable = annotatable;
+	public void setNumeric(boolean numeric) {
+		this.numeric = numeric;
+	}
+
+	public long getLength() {
+		return length;
+	}
+
+	public void setLength(long length) {
+		this.length = length;
 	}
 
 }

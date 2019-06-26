@@ -18,6 +18,12 @@ public class BuildIndex {
 		IndexOptionsFactory indexOptionsFactory = new IndexOptionsFactory();
 		IndexingConfiguration indexingConfig = indexOptionsFactory.getIndexOptions(indexPropertiesFilename);
 
+		if (!indexingConfig.isIndexFullText()
+				&& (indexingConfig.getIndexFields() == null || indexingConfig.getIndexFields().size() == 0)) {
+			throw new IllegalArgumentException(
+					"Either indexFullText must be true or indexFields must be defined (or both)");
+		}
+
 		IndexService indexService = new LuceneIndexServiceImpl();
 		indexService.buildIndex(indexingConfig);
 

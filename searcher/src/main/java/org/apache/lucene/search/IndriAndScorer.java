@@ -3,11 +3,20 @@ package org.apache.lucene.search;
 import java.io.IOException;
 import java.util.List;
 
-public class IndriAndScorer extends DisjunctionScorer implements SmoothingScorer {
-	private DisiWrapper subAvgScorers;
+import org.apache.lucene.search.DisiWrapper;
+import org.apache.lucene.search.DisjunctionScorer;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.Weight;
 
-	protected IndriAndScorer(Weight weight, List<Scorer> subScorers, boolean needsScores) {
-		super(weight, subScorers, needsScores);
+public class IndriAndScorer extends DisjunctionScorer implements SmoothingScorer, WeightedScorer {
+	private DisiWrapper subAvgScorers;
+	private float boost;
+
+	protected IndriAndScorer(Weight weight, List<Scorer> subScorers, ScoreMode scoreMode, float boost)
+			throws IOException {
+		super(weight, subScorers, scoreMode);
+		this.boost = boost;
 		this.subAvgScorers = null;
 		DisiWrapper prevWrapper = null;
 		for (Scorer scorer : subScorers) {
@@ -29,9 +38,16 @@ public class IndriAndScorer extends DisjunctionScorer implements SmoothingScorer
 			int docId = this.docID();
 			int scorerDocId = w.scorer.docID();
 			if (docId == scorerDocId) {
-				score += w.scorer.score();
+				double tempScore = w.scorer.score();
+				if (w.scorer instanceof WeightedScorer) {
+					tempScore *= ((WeightedScorer) w.scorer).getBoost();
+				}
+				score += tempScore;
 			} else if (w.scorer instanceof SmoothingScorer) {
 				float smoothingScore = ((SmoothingScorer) w.scorer).smoothingScore(w, docId);
+				if (w.scorer instanceof WeightedScorer) {
+					smoothingScore *= ((WeightedScorer) w.scorer).getBoost();
+				}
 				score += smoothingScore;
 			}
 			if (w.scorer instanceof WeightedScorer) {
@@ -50,16 +66,16 @@ public class IndriAndScorer extends DisjunctionScorer implements SmoothingScorer
 		double boostSum = 0.0;
 		for (DisiWrapper w = test; w != null; w = w.next) {
 			int scorerDocId = w.scorer.docID();
-			if (docId == scorerDocId) {
-				score += w.scorer.score();
-			} else if (w.scorer instanceof SmoothingScorer) {
-				float smoothingScore = ((SmoothingScorer) w.scorer).smoothingScore(w, docId);
-				score += smoothingScore;
-			}
+			float boost = 1.0f;
 			if (w.scorer instanceof WeightedScorer) {
-				boostSum += ((WeightedScorer) w.scorer).getBoost();
-			} else {
-				boostSum++;
+				boost = ((WeightedScorer) w.scorer).getBoost();
+			}
+			boostSum += boost;
+			if (docId == scorerDocId) {
+				score += boost * w.scorer.score();
+			} else if (w.scorer instanceof SmoothingScorer) {
+				float smoothingScore = boost * ((SmoothingScorer) w.scorer).smoothingScore(w, docId);
+				score += smoothingScore;
 			}
 		}
 		return (float) (score / boostSum);
@@ -69,6 +85,17 @@ public class IndriAndScorer extends DisjunctionScorer implements SmoothingScorer
 	@Override
 	DisiWrapper getSubMatches() throws IOException {
 		return subAvgScorers;
+	}
+
+	@Override
+	public float getBoost() {
+		return this.boost;
+	}
+
+	@Override
+	public float getMaxScore(int upTo) throws IOException {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

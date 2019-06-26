@@ -3,11 +3,17 @@ package org.apache.lucene.search;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.lucene.search.DisiWrapper;
+import org.apache.lucene.search.DisjunctionScorer;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.Weight;
+
 public class IndriOrScorer extends DisjunctionScorer implements SmoothingScorer {
 	private DisiWrapper subAvgScorers;
 
-	protected IndriOrScorer(Weight weight, List<Scorer> subScorers, boolean needsScores) {
-		super(weight, subScorers, needsScores);
+	protected IndriOrScorer(Weight weight, List<Scorer> subScorers, ScoreMode scoreMode) throws IOException {
+		super(weight, subScorers, scoreMode);
 		this.subAvgScorers = null;
 		DisiWrapper prevWrapper = null;
 		for (Scorer scorer : subScorers) {
@@ -56,6 +62,12 @@ public class IndriOrScorer extends DisjunctionScorer implements SmoothingScorer 
 			}
 		}
 		return (float) (Math.log(1.0 - score));
+	}
+
+	@Override
+	public float getMaxScore(int upTo) throws IOException {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

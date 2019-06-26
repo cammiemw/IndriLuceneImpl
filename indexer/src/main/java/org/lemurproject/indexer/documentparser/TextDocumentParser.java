@@ -16,9 +16,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import org.lemurproject.indexer.domain.IndexingConfiguration;
 import org.lemurproject.indexer.domain.ParsedDocument;
 import org.lemurproject.indexer.domain.ParsedDocumentField;
 
@@ -29,48 +29,66 @@ import org.lemurproject.indexer.domain.ParsedDocumentField;
  *
  *         Dec 1, 2016
  */
-public class TextDocumentParser implements DocumentParser {
+public class TextDocumentParser extends DocumentParser {
 
-  private final static String NAME_FIELD = "externalId";
-  private final static String ID_FIELD = "internalId";
-  private final static String BODY_FIELD = "body";
+	private final static String BODY_FIELD = "body";
+	private final static String BODY_LENGTH_FIELD = "bodylength";
 
-  private int docNum;
-  private File[] files;
+	private int docNum;
+	private File[] files;
+	private List<String> fieldsToIndex;
+	private boolean indexFullText;
 
-  public TextDocumentParser(String dataDirectory) {
-    files = new File(dataDirectory).listFiles();
-    docNum = 0;
-  }
+	public TextDocumentParser(IndexingConfiguration options) {
+		files = new File(options.getDataDirectory()).listFiles();
+		docNum = 0;
+		fieldsToIndex = options.getIndexFields();
+		indexFullText = options.isIndexFullText();
+	}
 
-  @Override
-  public boolean hasNextDocument() {
-    if (docNum < files.length) {
-      return true;
-    }
-    return false;
-  }
+	@Override
+	public boolean hasNextDocument() {
+		if (docNum < files.length) {
+			return true;
+		}
+		return false;
+	}
 
-  @Override
-  public ParsedDocument getNextDocument() throws IOException {
-    String content = new String(Files.readAllBytes(Paths.get(files[docNum].getPath())));
+	@Override
+	public ParsedDocument getNextDocument() throws IOException {
+		String content = new String(Files.readAllBytes(Paths.get(files[docNum].getPath())));
 
-    ParsedDocument doc = new ParsedDocument();
-    doc.setDocumentFields(new ArrayList<>());
+		ParsedDocument doc = new ParsedDocument();
+		doc.setDocumentFields(new ArrayList<>());
 
-    ParsedDocumentField internalIdField =
-        new ParsedDocumentField(ID_FIELD, String.valueOf(docNum), false);
-    doc.getDocumentFields().add(internalIdField);
+		ParsedDocumentField internalIdField = new ParsedDocumentField(INTERNALID_FIELD, String.valueOf(docNum), false);
+		doc.getDocumentFields().add(internalIdField);
 
-    ParsedDocumentField externalIdField =
-        new ParsedDocumentField(NAME_FIELD, files[docNum].getName(), false);
-    doc.getDocumentFields().add(externalIdField);
+		ParsedDocumentField externalIdField = new ParsedDocumentField(EXTERNALID_FIELD, files[docNum].getName(), false);
+		doc.getDocumentFields().add(externalIdField);
 
-    ParsedDocumentField bodyField = new ParsedDocumentField(BODY_FIELD, content, true);
-    doc.getDocumentFields().add(bodyField);
+		if (fieldsToIndex.contains(BODY_FIELD)) {
+			ParsedDocumentField bodyField = new ParsedDocumentField(BODY_FIELD, content, false);
+			bodyField.setLength(countTokens(content, BODY_FIELD));
+			doc.getDocumentFields().add(bodyField);
 
-    docNum++;
-    return doc;
-  }
+//			ParsedDocumentField bodyLengthField = new ParsedDocumentField(BODY_LENGTH_FIELD,
+//					countTokens(content, BODY_FIELD), true);
+//			doc.getDocumentFields().add(bodyLengthField);
+		}
+
+		if (indexFullText) {
+			ParsedDocumentField fullTextField = new ParsedDocumentField(FULLTEXT_FIELD, content, false);
+			fullTextField.setLength(countTokens(content, FULLTEXT_FIELD));
+			doc.getDocumentFields().add(fullTextField);
+
+//			ParsedDocumentField fulltextLengthField = new ParsedDocumentField(FULLTEXT_LENGTH_FIELD,
+//					countTokens(content, FULLTEXT_FIELD), true);
+//			doc.getDocumentFields().add(fulltextLengthField);
+		}
+
+		docNum++;
+		return doc;
+	}
 
 }

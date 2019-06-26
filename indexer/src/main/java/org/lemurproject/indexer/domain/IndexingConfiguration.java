@@ -1,6 +1,7 @@
 package org.lemurproject.indexer.domain;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class IndexingConfiguration extends BaseObject implements Serializable {
 
@@ -9,6 +10,10 @@ public class IndexingConfiguration extends BaseObject implements Serializable {
 	private String dataDirectory;
 	private String indexDirectory;
 	private String indexName;
+
+	// Field Options
+	private boolean indexFullText;
+	private List<String> indexFields;
 
 	// Analyzer Options
 	private String stemmer;
@@ -72,6 +77,22 @@ public class IndexingConfiguration extends BaseObject implements Serializable {
 
 	public void setIgnoreCase(boolean ignoreCase) {
 		this.ignoreCase = ignoreCase;
+	}
+
+	public boolean isIndexFullText() {
+		return indexFullText;
+	}
+
+	public void setIndexFullText(boolean indexFullText) {
+		this.indexFullText = indexFullText;
+	}
+
+	public List<String> getIndexFields() {
+		return indexFields;
+	}
+
+	public void setIndexFields(List<String> indexFields) {
+		this.indexFields = indexFields;
 	}
 
 }

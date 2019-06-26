@@ -41,8 +41,7 @@ public class LuceneIndexServiceImpl implements IndexService {
 		long startTime = System.currentTimeMillis();
 
 		DocumentParserFactory docParserFactory = new DocumentParserFactory();
-		DocumentParser docParser = docParserFactory.getDocumentParser(indexingConfig.getDocumentFormat(),
-				indexingConfig.getDataDirectory());
+		DocumentParser docParser = docParserFactory.getDocumentParser(indexingConfig);
 
 		List<DocumentWriter> docWriters = new ArrayList<>();
 		// TODO: Implement all documentWriters based on options

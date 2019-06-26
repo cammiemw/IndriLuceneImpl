@@ -15,6 +15,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.lemurproject.indexer.domain.IndexingConfiguration;
@@ -34,6 +36,15 @@ public class IndexOptionsFactory {
 		options.setDocumentFormat(properties.getProperty("documentFormat"));
 		options.setDataDirectory(properties.getProperty("dataDirectory"));
 		options.setIndexDirectory(properties.getProperty("indexDirectory"));
+		options.setIndexFullText(Boolean.valueOf(properties.getProperty("indexFullText")));
+		if (properties.getProperty("fieldNames") != null && properties.getProperty("fieldNames").trim().length() > 0) {
+			String[] fieldArray = properties.getProperty("fieldNames").split(",");
+			List<String> fields = new ArrayList<>();
+			for (String field : fieldArray) {
+				fields.add(field.trim());
+			}
+			options.setIndexFields(fields);
+		}
 		options.setIndexName(properties.getProperty("indexName"));
 		options.setStemmer(properties.getProperty("stemmer"));
 		options.setRemoveStopwords(Boolean.valueOf(properties.getProperty("removeStopwords")));

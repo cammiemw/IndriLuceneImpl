@@ -44,4 +44,10 @@ public class IndriTermScorerWrapper extends Scorer implements SmoothingScorer, W
 		return this.boost;
 	}
 
+	@Override
+	public float getMaxScore(int upTo) throws IOException {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

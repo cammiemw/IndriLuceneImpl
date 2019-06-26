@@ -14,12 +14,14 @@ package org.lemurproject.indexer.documentparser;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.lucene.benchmark.byTask.feeds.DocData;
 import org.apache.lucene.benchmark.byTask.feeds.NoMoreDataException;
 import org.apache.lucene.benchmark.byTask.feeds.TrecContentSourceExtended;
 import org.apache.lucene.benchmark.byTask.utils.Config;
+import org.lemurproject.indexer.domain.IndexingConfiguration;
 import org.lemurproject.indexer.domain.ParsedDocument;
 import org.lemurproject.indexer.domain.ParsedDocumentField;
 
@@ -28,10 +30,8 @@ import org.lemurproject.indexer.domain.ParsedDocumentField;
  *
  *         Dec 19, 2016
  */
-public class WSJDocumentParser implements DocumentParser {
+public class WSJDocumentParser extends DocumentParser {
 
-	private final static String EXTERNALID_FIELD = "externalId";
-	private final static String INTERNALID_FIELD = "internalId";
 	private final static String DATE_FIELD = "date";
 	private final static String SUBJECT_FIELD = "subject";
 	private final static String TITLE_FIELD = "title";
@@ -39,16 +39,18 @@ public class WSJDocumentParser implements DocumentParser {
 
 	private boolean hasNextDocument = true;
 	private TrecContentSourceExtended dcsr;
+	private List<String> fieldsToIndex;
+	private boolean indexFullText;
 
 	/**
 	 * @throws IOException
 	 * 
 	 */
-	public WSJDocumentParser(String dataDirectory) throws IOException {
+	public WSJDocumentParser(IndexingConfiguration options) throws IOException {
 		dcsr = new TrecContentSourceExtended();
 		Properties pr = new Properties();
-		pr.setProperty("work.dir", (new File(dataDirectory)).getAbsolutePath());
-		pr.setProperty("docs.dir", (new File(dataDirectory)).getAbsolutePath());
+		pr.setProperty("work.dir", (new File(options.getDataDirectory())).getAbsolutePath());
+		pr.setProperty("docs.dir", (new File(options.getDataDirectory())).getAbsolutePath());
 		pr.setProperty("trec.doc.parser", "org.apache.lucene.benchmark.byTask.feeds.TrecWSJParser");
 		pr.setProperty("content.source.forever", "false");
 		pr.setProperty("content.source.log.step", "100");
@@ -57,6 +59,8 @@ public class WSJDocumentParser implements DocumentParser {
 		Config cr = new Config(pr);
 		dcsr.setConfig(cr);
 		dcsr.resetInputs();
+		fieldsToIndex = options.getIndexFields();
+		indexFullText = options.isIndexFullText();
 	}
 
 	/*
@@ -94,24 +98,34 @@ public class WSJDocumentParser implements DocumentParser {
 					d.getProps().getProperty("internalId"), false);
 			doc.getDocumentFields().add(internalIdField);
 
-			ParsedDocumentField dateField = new ParsedDocumentField(DATE_FIELD, d.getProps().getProperty("headline"),
-					false);
-			doc.getDocumentFields().add(dateField);
+			if (fieldsToIndex.contains(DATE_FIELD)) {
+				ParsedDocumentField dateField = new ParsedDocumentField(DATE_FIELD,
+						d.getProps().getProperty("headline"), false);
+				doc.getDocumentFields().add(dateField);
+			}
 
-			ParsedDocumentField subjectField = new ParsedDocumentField(SUBJECT_FIELD,
-					d.getProps().getProperty("subject"), true);
-			doc.getDocumentFields().add(subjectField);
+			if (fieldsToIndex.contains(SUBJECT_FIELD)) {
+				ParsedDocumentField subjectField = new ParsedDocumentField(SUBJECT_FIELD,
+						d.getProps().getProperty("subject"), false);
+				doc.getDocumentFields().add(subjectField);
+			}
 
-			ParsedDocumentField titleField = new ParsedDocumentField(TITLE_FIELD, d.getTitle(), true);
-			doc.getDocumentFields().add(titleField);
+			if (fieldsToIndex.contains(TITLE_FIELD)) {
+				ParsedDocumentField titleField = new ParsedDocumentField(TITLE_FIELD, d.getTitle(), false);
+				doc.getDocumentFields().add(titleField);
+			}
 
-			ParsedDocumentField bodyField = new ParsedDocumentField(BODY_FIELD,
-					String.join("\n", d.getTitle(), d.getProps().getProperty("summary"), d.getBody()), true);
-			doc.getDocumentFields().add(bodyField);
+			if (fieldsToIndex.contains(BODY_FIELD)) {
+				ParsedDocumentField bodyField = new ParsedDocumentField(BODY_FIELD,
+						String.join("\n", d.getTitle(), d.getProps().getProperty("summary"), d.getBody()), false);
+				doc.getDocumentFields().add(bodyField);
+			}
 
-//			String all = String.join(System.lineSeparator(), d.getTitle(), d.getBody());
-//			ParsedDocumentField allField = new ParsedDocumentField("indriall", all, true);
-//			doc.getDocumentFields().add(allField);
+			if (indexFullText) {
+				String all = String.join(System.lineSeparator(), d.getTitle(), d.getBody());
+				ParsedDocumentField allField = new ParsedDocumentField(FULLTEXT_FIELD, all, false);
+				doc.getDocumentFields().add(allField);
+			}
 
 		} catch (NoMoreDataException e) {
 			hasNextDocument = false;

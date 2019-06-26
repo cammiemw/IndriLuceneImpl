@@ -8,6 +8,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.IndriOrWeight;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Weight;
 
 public class IndriOrQuery extends Query implements Iterable<BooleanClause> {
@@ -36,9 +37,9 @@ public class IndriOrQuery extends Query implements Iterable<BooleanClause> {
 	}
 
 	@Override
-	public Weight createWeight(IndexSearcher searcher, boolean needsScores, float boost) throws IOException {
+	public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
 		IndriOrQuery query = this;
-		return new IndriOrWeight(query, searcher, needsScores, boost);
+		return new IndriOrWeight(query, searcher, scoreMode, boost);
 	}
 
 	@Override

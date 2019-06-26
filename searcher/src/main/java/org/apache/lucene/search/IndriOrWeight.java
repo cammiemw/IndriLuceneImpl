@@ -13,23 +13,23 @@ import org.lemurproject.searcher.IndriOrQuery;
 
 public class IndriOrWeight extends Weight {
 	/** The Similarity implementation. */
-	final Similarity similarity;
-	final IndriOrQuery query;
+	private final Similarity similarity;
+	private final IndriOrQuery query;
 
-	final ArrayList<Weight> weights;
-	final boolean needsScores;
-	final float boost;
+	private final ArrayList<Weight> weights;
+	private final ScoreMode scoreMode;
+	private final float boost;
 
-	public IndriOrWeight(IndriOrQuery query, IndexSearcher searcher, boolean needsScores, float boost)
+	public IndriOrWeight(IndriOrQuery query, IndexSearcher searcher, ScoreMode scoreMode, float boost)
 			throws IOException {
 		super(query);
 		this.query = query;
 		this.boost = boost;
-		this.needsScores = needsScores;
-		this.similarity = searcher.getSimilarity(needsScores);
+		this.scoreMode = scoreMode;
+		this.similarity = searcher.getSimilarity();
 		weights = new ArrayList<>();
 		for (BooleanClause c : query) {
-			Weight w = searcher.createWeight(c.getQuery(), needsScores && c.isScoring(), boost);
+			Weight w = searcher.createWeight(c.getQuery(), scoreMode, boost);
 			weights.add(w);
 		}
 	}
@@ -63,9 +63,13 @@ public class IndriOrWeight extends Weight {
 			}
 		}
 
+		if (subScorers.isEmpty()) {
+			return null;
+		}
+
 		Scorer scorer = subScorers.get(0);
 		if (subScorers.size() > 1) {
-			scorer = new IndriOrScorer(this, subScorers, needsScores);
+			scorer = new IndriOrScorer(this, subScorers, scoreMode);
 		}
 		return scorer;
 	}
@@ -73,14 +77,16 @@ public class IndriOrWeight extends Weight {
 	@Override
 	public Scorer scorer(LeafReaderContext context) throws IOException {
 		return getScorer(context);
-		// return null;
 	}
 
 	@Override
 	public BulkScorer bulkScorer(LeafReaderContext context) throws IOException {
 		Scorer scorer = getScorer(context);
-		BulkScorer bulkScorer = new DefaultBulkScorer(scorer);
-		return bulkScorer;
+		if (scorer != null) {
+			BulkScorer bulkScorer = new DefaultBulkScorer(scorer);
+			return bulkScorer;
+		}
+		return null;
 	}
 
 }

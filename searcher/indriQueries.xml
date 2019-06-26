@@ -1,0 +1,12 @@
+<parameters>
+        <index>C://dev//Indexes_Lucene_1.0//wapo_sample3</index>
+        <trecFormat>true</trecFormat>
+        <rule>dirichlet:2000</rule>
+        <count>1000</count>
+        <query>
+                <type>indri</type>
+                <number> 52 </number>
+                <text>#weight(0.8 president 0.2 obama)</text>
+        </query>
+        
+</parameters>

@@ -1,9 +1,12 @@
 package org.lemurproject.indexer.domain;
 
+import java.util.List;
+
 public class JsonDocument extends BaseObject {
 
 	private String docno;
 	private String text;
+	private List<JsonDocumentField> fields;
 
 	public String getDocno() {
 		return docno;
@@ -19,6 +22,14 @@ public class JsonDocument extends BaseObject {
 
 	public void setText(String text) {
 		this.text = text;
+	}
+
+	public List<JsonDocumentField> getFields() {
+		return fields;
+	}
+
+	public void setFields(List<JsonDocumentField> fields) {
+		this.fields = fields;
 	}
 
 }
