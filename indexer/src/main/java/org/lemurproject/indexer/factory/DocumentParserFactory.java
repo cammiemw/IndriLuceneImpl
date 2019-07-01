@@ -20,6 +20,7 @@ import org.lemurproject.indexer.documentparser.DocumentParser;
 import org.lemurproject.indexer.documentparser.Gov2DocumentParser;
 import org.lemurproject.indexer.documentparser.JsonDocumentParser;
 import org.lemurproject.indexer.documentparser.TextDocumentParser;
+import org.lemurproject.indexer.documentparser.WARCDocumentParser;
 import org.lemurproject.indexer.documentparser.WSJDocumentParser;
 import org.lemurproject.indexer.documentparser.WashingtonPostDocumentParser;
 import org.lemurproject.indexer.domain.IndexingConfiguration;
@@ -44,6 +45,7 @@ public class DocumentParserFactory {
 		docParserMap.put("gov2", Gov2DocumentParser.class);
 		docParserMap.put("json", JsonDocumentParser.class);
 		docParserMap.put("wapo", WashingtonPostDocumentParser.class);
+		docParserMap.put("warc", WARCDocumentParser.class);
 		// docParserMap.put("webcrawler", WebCrawlerDocumentParser.class);
 	}
 

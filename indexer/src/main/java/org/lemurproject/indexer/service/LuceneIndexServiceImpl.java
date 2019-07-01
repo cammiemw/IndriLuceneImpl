@@ -62,10 +62,11 @@ public class LuceneIndexServiceImpl implements IndexService {
 				for (DocumentWriter writer : docWriters) {
 					writer.writeDocuments(parsedDoc);
 				}
+				if (docCount % 100 == 0) {
+					System.out.println(docCount + " documents indexed...");
+				}
 			}
-			if (docCount % 100 == 0) {
-				System.out.println(docCount + " documents indexed...");
-			}
+
 		}
 
 		for (DocumentWriter writer : docWriters) {
