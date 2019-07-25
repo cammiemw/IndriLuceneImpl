@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringJoiner;
@@ -46,8 +44,10 @@ public class WARCDocumentParser extends DocumentParser {
 	private boolean indexFullText;
 
 	public WARCDocumentParser(IndexingConfiguration options) throws IOException {
-		File folder = Paths.get(options.getDataDirectory()).toFile();
-		fileIterator = Arrays.asList(folder.listFiles()).iterator();
+		// File folder = Paths.get(options.getDataDirectory()).toFile();
+		List<File> files = new ArrayList<>();
+		listFiles(options.getDataDirectory(), files);
+		fileIterator = files.iterator();
 		getNextScanner();
 		nextLine = "";
 		ConfigurableAnalyzerFactory analyzerFactory = new ConfigurableAnalyzerFactory();
@@ -55,6 +55,20 @@ public class WARCDocumentParser extends DocumentParser {
 		docNum = 0;
 		fieldsToIndex = options.getIndexFields();
 		indexFullText = options.isIndexFullText();
+	}
+
+	public static void listFiles(String directoryName, List<File> files) {
+		File directory = new File(directoryName);
+
+		// get all the files from a directory
+		File[] fList = directory.listFiles();
+		for (File file : fList) {
+			if (file.isFile()) {
+				files.add(file);
+			} else if (file.isDirectory()) {
+				listFiles(file.getAbsolutePath(), files);
+			}
+		}
 	}
 
 	private void getNextScanner() throws IOException {

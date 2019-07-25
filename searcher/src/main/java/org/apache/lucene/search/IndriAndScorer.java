@@ -3,12 +3,6 @@ package org.apache.lucene.search;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.lucene.search.DisiWrapper;
-import org.apache.lucene.search.DisjunctionScorer;
-import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
-
 public class IndriAndScorer extends DisjunctionScorer implements SmoothingScorer, WeightedScorer {
 	private DisiWrapper subAvgScorers;
 	private float boost;

@@ -199,6 +199,7 @@ public abstract class IndriSimilarity extends Similarity {
 
 		double getLengthValue(long norm) {
 			return LENGTH_TABLE[Byte.toUnsignedInt((byte) norm)];
+			// return LENGTH_TABLE[(int) norm];
 		}
 
 		@Override
@@ -264,7 +265,7 @@ public abstract class IndriSimilarity extends Similarity {
 
 		@Override
 		public double computeProbability(BasicStats stats) {
-			return (stats.getTotalTermFreq() + 1D) / (stats.getNumberOfFieldTokens() + 1D);
+			return ((double) stats.getTotalTermFreq()) / ((double) stats.getNumberOfFieldTokens());
 		}
 
 		@Override

@@ -14,7 +14,8 @@ package org.lemurproject.indexer.documentwriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,7 +35,6 @@ import org.lemurproject.indexer.domain.IndexingConfiguration;
 import org.lemurproject.indexer.domain.ParsedDocument;
 import org.lemurproject.indexer.domain.ParsedDocumentField;
 import org.lemurproject.indexer.factory.ConfigurableAnalyzerFactory;
-import org.lemurproject.searcher.domain.IndriConstants;
 
 public class LuceneDocumentWriter implements DocumentWriter {
 
@@ -44,6 +44,8 @@ public class LuceneDocumentWriter implements DocumentWriter {
 	private IndexWriter iWriter;
 	private FieldType fieldType;
 	private Similarity similarity;
+
+	private List<Document> luceneDocs;
 
 	public LuceneDocumentWriter(IndexingConfiguration options)
 			throws IOException, ClassCastException, ClassNotFoundException {
@@ -55,6 +57,8 @@ public class LuceneDocumentWriter implements DocumentWriter {
 		iWriter = createIndexWriter(indexDirectory, analyzer);
 
 		fieldType = getFieldType();
+
+		luceneDocs = new ArrayList<>();
 	}
 
 	/**
@@ -70,6 +74,7 @@ public class LuceneDocumentWriter implements DocumentWriter {
 
 		Path path = Paths.get(indexDirectory);
 		Directory directory = FSDirectory.open(path);
+		// Directory directory = new SimpleFSDirectory(path, NoLockFactory.INSTANCE);
 
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE);
@@ -113,25 +118,33 @@ public class LuceneDocumentWriter implements DocumentWriter {
 					}
 				}
 			}
-			iWriter.addDocument(luceneDoc);
+			// iWriter.addDocument(luceneDoc);
+			luceneDocs.add(luceneDoc);
+		}
+		if (luceneDocs.size() >= 500) {
+			iWriter.addDocuments(luceneDocs);
+			luceneDocs = new ArrayList<>();
 		}
 	}
 
 	public void closeDocumentWriter() throws IOException {
-		writeTotalDocLens();
+		if (luceneDocs.size() > 0) {
+			iWriter.addDocuments(luceneDocs);
+		}
+		// writeTotalDocLens();
 		iWriter.close();
 	}
 
-	private void writeTotalDocLens() throws IOException {
-		Map<String, Long> docLens = ((IndriDirichletSimilarity) similarity).getTotalFieldLengths();
-		Document docLenDoc = new Document();
-		Field nameField = new Field(IndriConstants.COLLECTION_TOTAL_DOCUMENT_NAME,
-				IndriConstants.COLLECTION_TOTAL_DOCUMENT_NAME, fieldType);
-		docLens.forEach((fieldName, length) -> {
-			Field field = new NumericDocValuesField(fieldName + IndriConstants.FIELD_TOTAL_SUFFIX, length);
-			docLenDoc.add(field);
-		});
-		iWriter.addDocument(docLenDoc);
-	}
+//	private void writeTotalDocLens() throws IOException {
+//		Map<String, Long> docLens = ((IndriDirichletSimilarity) similarity).getTotalFieldLengths();
+//		Document docLenDoc = new Document();
+//		Field nameField = new Field(IndriConstants.COLLECTION_TOTAL_DOCUMENT_NAME,
+//				IndriConstants.COLLECTION_TOTAL_DOCUMENT_NAME, fieldType);
+//		docLens.forEach((fieldName, length) -> {
+//			Field field = new NumericDocValuesField(fieldName + IndriConstants.FIELD_TOTAL_SUFFIX, length);
+//			docLenDoc.add(field);
+//		});
+//		iWriter.addDocument(docLenDoc);
+//	}
 
 }

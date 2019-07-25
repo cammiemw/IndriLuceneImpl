@@ -123,7 +123,7 @@ public class IndriTermQueryWrapper extends Query {
 						scorer);
 			}
 
-			Scorer indriTermScorer = new IndriTermScorerWrapper(termWeight, simScorer, termScorer, this.boost);
+			Scorer indriTermScorer = new IndriTermScorerWrapper(termWeight, scorer, termScorer, this.boost);
 			return indriTermScorer;
 		}
 

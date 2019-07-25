@@ -2,15 +2,13 @@ package org.apache.lucene.search;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.similarities.Similarity;
-
 public class IndriTermScorerWrapper extends Scorer implements SmoothingScorer, WeightedScorer {
 
 	private final Scorer termScorer;
-	private final Similarity.SimScorer docScorer;
+	private final LeafSimScorer docScorer;
 	private final float boost;
 
-	protected IndriTermScorerWrapper(Weight weight, Similarity.SimScorer docScorer, Scorer termScorer, float boost) {
+	protected IndriTermScorerWrapper(Weight weight, LeafSimScorer docScorer, Scorer termScorer, float boost) {
 		super(weight);
 		this.docScorer = docScorer;
 		this.termScorer = termScorer;

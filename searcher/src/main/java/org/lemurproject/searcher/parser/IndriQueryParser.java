@@ -15,6 +15,7 @@ import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.IndriTermQueryWrapper;
 import org.apache.lucene.search.Query;
 import org.lemurproject.searcher.IndriAndQuery;
+import org.lemurproject.searcher.IndriBandQuery;
 import org.lemurproject.searcher.IndriMaxQuery;
 import org.lemurproject.searcher.IndriNearQuery;
 import org.lemurproject.searcher.IndriOrQuery;
@@ -28,6 +29,7 @@ import org.lemurproject.sifaka.luceneanalyzer.EnglishAnalyzerConfigurable;
 public class IndriQueryParser {
 
 	private final static String AND = "and";
+	private final static String BAND = "band";
 	private final static String NEAR = "near";
 	private final static String OR = "or";
 	private final static String WAND = "wand";
@@ -37,6 +39,7 @@ public class IndriQueryParser {
 	private final static String WSUM = "wsum";
 	private final static String MAX = "max";
 	private final static String COMBINE = "combine";
+	private final static String SCOREIF = "scoreif";
 
 	private final Analyzer analyzer;
 
@@ -342,6 +345,8 @@ public class IndriQueryParser {
 				query = new IndriNearQuery(clauses, operatorQuery.getField(), operatorQuery.getDistance());
 			} else if (operatorQuery.getOperator().equalsIgnoreCase(WINDOW)) {
 				query = new IndriWindowQuery(clauses, operatorQuery.getField(), operatorQuery.getDistance());
+			} else if (operatorQuery.getOperator().equalsIgnoreCase(BAND)) {
+				query = new IndriBandQuery(clauses);
 			} else {
 				query = new IndriAndQuery(clauses);
 			}
