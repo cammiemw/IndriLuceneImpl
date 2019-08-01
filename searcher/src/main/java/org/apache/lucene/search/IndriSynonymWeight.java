@@ -16,13 +16,14 @@ public class IndriSynonymWeight extends IndriBeliefOpWeight {
 		IndriInvertedList invList = new IndriInvertedList(getField());
 
 		for (IndriDocAndPostingsIterator iterator : iterators) {
+			int docId = iterator.nextDoc();
 			while (iterator.docID() != DocIdSetIterator.NO_MORE_DOCS) {
-				int docId = iterator.nextDoc();
 				for (int i = 0; i < iterator.freq(); i++) {
 					int startPostion = iterator.nextPosition();
 					int endPostion = iterator.endPosition();
 					invList.addPosting(docId, startPostion, endPostion);
 				}
+				docId = iterator.nextDoc();
 			}
 		}
 		return invList;

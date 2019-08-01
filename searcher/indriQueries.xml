@@ -6,7 +6,7 @@
         <query>
                 <type>indri</type>
                 <number> 52 </number>
-                <text>#scoreif(president clinton)</text>
+                <text>#syn(cameron senator)</text>
         </query>
         
 </parameters>

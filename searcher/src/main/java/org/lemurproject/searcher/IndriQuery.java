@@ -7,18 +7,20 @@ import java.util.List;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.IndriAndWeight;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Weight;
 
-public class IndriAndQuery extends IndriQuery {
-	private List<BooleanClause> clauses; // used for toString() and getClauses()
+public abstract class IndriQuery extends Query implements Iterable<BooleanClause> {
 
-	public IndriAndQuery(List<BooleanClause> clauses) {
-		super(clauses);
+	private List<BooleanClause> clauses;
+
+	public IndriQuery(List<BooleanClause> clauses) {
 		this.clauses = clauses;
 	}
+
+	@Override
+	public abstract Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException;
 
 	@Override
 	public String toString(String field) {
@@ -59,14 +61,12 @@ public class IndriAndQuery extends IndriQuery {
 	}
 
 	@Override
-	public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
-		IndriAndQuery query = this;
-		return new IndriAndWeight(query, searcher, scoreMode, boost);
-	}
-
-	@Override
 	public Iterator<BooleanClause> iterator() {
 		return clauses.iterator();
+	}
+
+	public List<BooleanClause> getClauses() {
+		return this.clauses;
 	}
 
 }
