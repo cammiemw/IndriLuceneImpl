@@ -2,6 +2,7 @@ package org.apache.lucene.search;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.TreeMap;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.util.BytesRef;
@@ -55,7 +56,7 @@ public class IndriProximityEnum extends IndriDocAndPostingsIterator {
 	}
 
 	public int freq() throws IOException {
-		List<IndriDocumentPosting> docPostings = invList.getDocPostings().get(currentDocID);
+		TreeMap<Integer, IndriDocumentPosting> docPostings = invList.getDocPostings().get(currentDocID);
 		int freq = 0;
 		if (docPostings != null) {
 			freq = docPostings.size();

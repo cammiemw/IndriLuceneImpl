@@ -11,13 +11,16 @@ import org.apache.lucene.search.Weight;
 
 public class IndriNearQuery extends IndriProximityQuery {
 
+	private final int distance;
+
 	public IndriNearQuery(List<BooleanClause> clauses, String field, int distance) {
-		super(clauses, field, distance);
+		super(clauses, field);
+		this.distance = distance;
 	}
 
 	@Override
 	public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
-		return new IndriNearWeight(this, searcher, getField(), getDistance(), boost);
+		return new IndriNearWeight(this, searcher, getField(), distance, boost);
 	}
 
 }

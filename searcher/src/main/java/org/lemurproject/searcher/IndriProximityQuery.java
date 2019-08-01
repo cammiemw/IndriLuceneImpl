@@ -12,13 +12,11 @@ import org.apache.lucene.search.Weight;
 
 public abstract class IndriProximityQuery extends Query implements Iterable<BooleanClause> {
 
-	private final int distance;
 	private final String field;
 	private List<BooleanClause> clauses;
 
-	public IndriProximityQuery(List<BooleanClause> clauses, String field, int distance) {
+	public IndriProximityQuery(List<BooleanClause> clauses, String field) {
 		this.clauses = clauses;
-		this.distance = distance;
 		this.field = field;
 	}
 
@@ -46,10 +44,6 @@ public abstract class IndriProximityQuery extends Query implements Iterable<Bool
 	@Override
 	public Iterator<BooleanClause> iterator() {
 		return clauses.iterator();
-	}
-
-	public int getDistance() {
-		return this.distance;
 	}
 
 	public String getField() {

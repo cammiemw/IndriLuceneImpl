@@ -19,6 +19,9 @@ import org.lemurproject.searcher.IndriBandQuery;
 import org.lemurproject.searcher.IndriMaxQuery;
 import org.lemurproject.searcher.IndriNearQuery;
 import org.lemurproject.searcher.IndriOrQuery;
+import org.lemurproject.searcher.IndriScoreIfNotQuery;
+import org.lemurproject.searcher.IndriScoreIfQuery;
+import org.lemurproject.searcher.IndriSynonymQuery;
 import org.lemurproject.searcher.IndriWeightedSumQuery;
 import org.lemurproject.searcher.IndriWindowQuery;
 import org.lemurproject.searcher.domain.QueryParserOperatorQuery;
@@ -40,6 +43,8 @@ public class IndriQueryParser {
 	private final static String MAX = "max";
 	private final static String COMBINE = "combine";
 	private final static String SCOREIF = "scoreif";
+	private final static String SCOREIFNOT = "scoreifnot";
+	private final static String SYNONYM = "syn";
 
 	private final Analyzer analyzer;
 
@@ -95,7 +100,7 @@ public class IndriQueryParser {
 		return -1;
 	}
 
-	private QueryParserOperatorQuery createOperator(String operatorName) {
+	private QueryParserOperatorQuery createOperator(String operatorName, Occur occur) {
 		QueryParserOperatorQuery operatorQuery = new QueryParserOperatorQuery();
 
 		int operatorDistance = 0;
@@ -124,6 +129,7 @@ public class IndriQueryParser {
 		operatorQuery.setOperator(operatorNameLowerCase);
 		operatorQuery.setField("fulltext");
 		operatorQuery.setDistance(operatorDistance);
+		operatorQuery.setOccur(occur);
 
 		return operatorQuery;
 	}
@@ -180,7 +186,7 @@ public class IndriQueryParser {
 	 * @return PopData<String,String> The subquery string and the modified argString
 	 *         (e.g., "#and(a b)" and "c d".
 	 */
-	private String popSubquery(String argString, QueryParserOperatorQuery queryTree, Float weight) {
+	private String popSubquery(String argString, QueryParserOperatorQuery queryTree, Float weight, Occur occur) {
 
 		int i = indexOfBalencingParen(argString);
 
@@ -189,7 +195,7 @@ public class IndriQueryParser {
 		}
 
 		String subquery = argString.substring(0, i + 1);
-		queryTree.addSubquery(parseQueryString(subquery), weight);
+		queryTree.addSubquery(parseQueryString(subquery, occur), weight);
 
 		argString = argString.substring(i + 1);
 
@@ -204,7 +210,7 @@ public class IndriQueryParser {
 	 * @return PopData<String,String> The term string and the modified argString
 	 *         (e.g., "a" and "b c d".
 	 */
-	private String popTerm(String argString, QueryParserOperatorQuery queryTree, Float weight) {
+	private String popTerm(String argString, QueryParserOperatorQuery queryTree, Float weight, Occur occur) {
 		String[] substrings = argString.split("[ \t\n\r]+", 2);
 		String token = substrings[0];
 
@@ -227,6 +233,7 @@ public class IndriQueryParser {
 			QueryParserTermQuery termQuery = new QueryParserTermQuery();
 			termQuery.setTerm(t);
 			termQuery.setField(field);
+			termQuery.setOccur(occur);
 			queryTree.addSubquery(termQuery, weight);
 		}
 
@@ -239,7 +246,7 @@ public class IndriQueryParser {
 		return argString;
 	}
 
-	private QueryParserQuery parseQueryString(String queryString) {
+	private QueryParserQuery parseQueryString(String queryString, Occur occur) {
 		// Create the query tree
 		// This simple parser is sensitive to parenthensis placement, so
 		// check for basic errors first.
@@ -263,7 +270,12 @@ public class IndriQueryParser {
 		if (substrings.length > 1) {
 			queryOperator = substrings[0].trim();
 		}
-		QueryParserOperatorQuery queryTree = createOperator(queryOperator);
+		QueryParserOperatorQuery queryTree = createOperator(queryOperator, occur);
+		if (queryOperator.endsWith(SCOREIF)) {
+			occur = Occur.MUST;
+		} else if (queryOperator.endsWith(SCOREIFNOT)) {
+			occur = Occur.MUST_NOT;
+		}
 
 		// Start consuming queryString by removing the query operator and
 		// its terminating ')'. queryString is always the part of the
@@ -294,9 +306,11 @@ public class IndriQueryParser {
 
 			// Now handle the argument (which could be a subquery).
 			if (queryString.charAt(0) == '#') { // Subquery
-				queryString = popSubquery(queryString, queryTree, weight).trim();
+				queryString = popSubquery(queryString, queryTree, weight, occur).trim();
+				occur = Occur.SHOULD;
 			} else { // Term
-				queryString = popTerm(queryString, queryTree, weight);
+				queryString = popTerm(queryString, queryTree, weight, occur);
+				occur = Occur.SHOULD;
 			}
 		}
 
@@ -305,7 +319,7 @@ public class IndriQueryParser {
 
 	public Query parseQuery(String queryString) {
 		// TODO: json or indri query
-		QueryParserQuery qry = parseQueryString(queryString);
+		QueryParserQuery qry = parseQueryString(queryString, Occur.SHOULD);
 		return getLuceneQuery(qry);
 	}
 
@@ -347,6 +361,12 @@ public class IndriQueryParser {
 				query = new IndriWindowQuery(clauses, operatorQuery.getField(), operatorQuery.getDistance());
 			} else if (operatorQuery.getOperator().equalsIgnoreCase(BAND)) {
 				query = new IndriBandQuery(clauses);
+			} else if (operatorQuery.getOperator().equalsIgnoreCase(SCOREIFNOT)) {
+				query = new IndriScoreIfNotQuery(clauses);
+			} else if (operatorQuery.getOperator().equalsIgnoreCase(SCOREIF)) {
+				query = new IndriScoreIfQuery(clauses);
+			} else if (operatorQuery.getOperator().equalsIgnoreCase(SYNONYM)) {
+				query = new IndriSynonymQuery(clauses, operatorQuery.getField());
 			} else {
 				query = new IndriAndQuery(clauses);
 			}
@@ -363,7 +383,7 @@ public class IndriQueryParser {
 		if (queryTree.getBoost() != null) {
 			query = new BoostQuery(query, queryTree.getBoost().floatValue());
 		}
-		BooleanClause clause = new BooleanClause(query, Occur.SHOULD);
+		BooleanClause clause = new BooleanClause(query, queryTree.getOccur());
 		return clause;
 	}
 

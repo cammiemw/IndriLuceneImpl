@@ -45,8 +45,9 @@ public class IndriDirichletSimilarity extends IndriSimilarity {
 		}
 
 		subs.add(Explanation.match(mu, "mu"));
-		Explanation weightExpl = Explanation.match(
-				(float) Math.log(1 + freq / (mu * ((IndriStats) stats).getCollectionProbability())), "term weight");
+		double collectionProbability = ((IndriStats) stats).getCollectionProbability();
+		Explanation weightExpl = Explanation
+				.match((float) Math.log((freq + (mu * collectionProbability)) / (docLen + mu)), "term weight");
 		subs.add(weightExpl);
 		subs.add(Explanation.match((float) Math.log(mu / (docLen + mu)), "document norm"));
 		super.explain(subs, stats, freq, docLen);
@@ -58,7 +59,7 @@ public class IndriDirichletSimilarity extends IndriSimilarity {
 	}
 
 	public String getName() {
-		return String.format(Locale.ROOT, "Dirichlet(%f)", getMu());
+		return String.format(Locale.ROOT, "IndriDirichlet(%f)", getMu());
 	}
 
 	/**

@@ -6,7 +6,7 @@
         <query>
                 <type>indri</type>
                 <number> 52 </number>
-                <text>#band(president clinton)</text>
+                <text>#scoreif(president clinton)</text>
         </query>
         
 </parameters>

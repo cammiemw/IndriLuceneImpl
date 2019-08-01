@@ -150,7 +150,10 @@ public abstract class IndriSimilarity extends Similarity {
 		this.norm = value;
 	}
 
-	/** Encodes the document length in the same way as {@link BM25Similarity}. */
+	/**
+	 * Encodes the document length as the total number of tokens including
+	 * stopwords.
+	 */
 	@Override
 	public final long computeNorm(FieldInvertState state) {
 		long numTerms = 0;
@@ -161,10 +164,6 @@ public abstract class IndriSimilarity extends Similarity {
 		} else if (state.getPosition() > 0) {
 			numTerms = state.getPosition();
 		}
-		// long length = SmallFloat.intToByte4(numTerms + 1);
-		// fieldDocLenTotalMap.putIfAbsent(state.getName(), 0l);
-		// fieldDocLenTotalMap.put(state.getName(),
-		// fieldDocLenTotalMap.get(state.getName()) + length);
 		return numTerms + 1;
 
 	}

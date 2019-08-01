@@ -12,7 +12,7 @@ public class IndriInvertedList {
 	private final String field;
 	private int ctf;
 	private int df;
-	private TreeMap<Integer, List<IndriDocumentPosting>> docPostings;
+	private TreeMap<Integer, TreeMap<Integer, IndriDocumentPosting>> docPostings;
 
 	public IndriInvertedList(String field) {
 		this.field = field;
@@ -39,27 +39,27 @@ public class IndriInvertedList {
 		this.df = df;
 	}
 
-	public TreeMap<Integer, List<IndriDocumentPosting>> getDocPostings() {
+	public TreeMap<Integer, TreeMap<Integer, IndriDocumentPosting>> getDocPostings() {
 		return docPostings;
 	}
 
-	public void setDocPostings(TreeMap<Integer, List<IndriDocumentPosting>> docPostings) {
+	public void setDocPostings(TreeMap<Integer, TreeMap<Integer, IndriDocumentPosting>> docPostings) {
 		this.docPostings = docPostings;
 	}
 
 	public void addPosting(Integer docID, Integer startLocation, Integer endLocation) {
-		docPostings.putIfAbsent(docID, new ArrayList<>());
+		docPostings.putIfAbsent(docID, new TreeMap<>());
 		// Check if a posting that includes this start and end position already exist
-		List<IndriDocumentPosting> postings = docPostings.get(docID);
+		TreeMap<Integer, IndriDocumentPosting> postings = docPostings.get(docID);
 		boolean addPosting = true;
-		for (IndriDocumentPosting posting : postings) {
+		for (IndriDocumentPosting posting : postings.values()) {
 			if (startLocation >= posting.getStart() && endLocation <= posting.getEnd()) {
 				addPosting = false;
 			}
 		}
 		if (addPosting) {
 			IndriDocumentPosting posting = new IndriDocumentPosting(startLocation, endLocation);
-			docPostings.get(docID).add(posting);
+			docPostings.get(docID).put(startLocation, posting);
 		}
 	}
 
@@ -67,7 +67,7 @@ public class IndriInvertedList {
 		Term dummyTerm = new Term(field, "NEAR");
 		int docFreq = docPostings.size();
 		int totalTermFreq = 0;
-		for (List<IndriDocumentPosting> postings : docPostings.values()) {
+		for (TreeMap<Integer, IndriDocumentPosting> postings : docPostings.values()) {
 			totalTermFreq += postings.size();
 		}
 		TermStatistics termStats = new TermStatistics(dummyTerm.bytes(), docFreq, totalTermFreq);

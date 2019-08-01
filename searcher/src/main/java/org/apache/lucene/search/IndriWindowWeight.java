@@ -9,23 +9,18 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.lemurproject.searcher.IndriWindowQuery;
 
-public class IndriWindowWeight extends IndriProximityWeight {
+public class IndriWindowWeight extends IndriBeliefOpWeight {
+	
+	private final int distance;
 
 	public IndriWindowWeight(IndriWindowQuery query, IndexSearcher searcher, String field, int distance, float boost)
 			throws IOException {
-		super(query, searcher, field, distance, boost);
+		super(query, searcher, field, boost);
+		this.distance = distance;
 	}
 
 	@Override
-	protected IndriProximityEnum getProximityIterator(List<IndriDocAndPostingsIterator> iterators, int distance)
-			throws IOException {
-		IndriInvertedList invList = createInvertedList(iterators, distance);
-		IndriProximityEnum nearPostings = new IndriProximityEnum(invList);
-
-		return nearPostings;
-	}
-
-	private IndriInvertedList createInvertedList(List<IndriDocAndPostingsIterator> iterators, int distance)
+	protected IndriInvertedList createInvertedList(List<IndriDocAndPostingsIterator> iterators)
 			throws IOException {
 		IndriInvertedList invList = new IndriInvertedList(getField());
 

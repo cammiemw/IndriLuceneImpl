@@ -4,8 +4,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.similarities.BasicStats;
-import org.apache.lucene.search.similarities.LMSimilarity;
+import org.apache.lucene.search.similarities.IndriSimilarity.IndriStats;
 
 /**
  * Language model based on the Jelinek-Mercer smoothing method. From Chengxiang
@@ -44,7 +43,7 @@ public class IndriJelinekMercerSimilarity extends LMSimilarity {
 	@Override
 	protected double score(BasicStats stats, double freq, double docLen) {
 		return (double) (Math
-				.log(((1 - lambda) * freq / docLen) + (lambda * ((LMStats) stats).getCollectionProbability())));
+				.log(((1 - lambda) * freq / docLen) + (lambda * ((IndriStats) stats).getCollectionProbability())));
 	}
 
 	@Override
@@ -52,6 +51,11 @@ public class IndriJelinekMercerSimilarity extends LMSimilarity {
 		if (stats.getBoost() != 1.0f) {
 			subs.add(Explanation.match(stats.getBoost(), "boost"));
 		}
+		Explanation weightExpl = Explanation.match(
+				(float) Math.log(
+						((1 - lambda) * freq / docLen) + (lambda * ((IndriStats) stats).getCollectionProbability())),
+				"term weight");
+		subs.add(weightExpl);
 		subs.add(Explanation.match(lambda, "lambda"));
 		super.explain(subs, stats, freq, docLen);
 	}
@@ -63,7 +67,7 @@ public class IndriJelinekMercerSimilarity extends LMSimilarity {
 
 	@Override
 	public String getName() {
-		return String.format(Locale.ROOT, "Jelinek-Mercer(%f)", getLambda());
+		return String.format(Locale.ROOT, "IndriJelinek-Mercer(%f)", getLambda());
 	}
 
 	/**

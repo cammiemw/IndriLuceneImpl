@@ -11,22 +11,20 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.similarities.Similarity;
 import org.lemurproject.searcher.IndriProximityQuery;
 
-public abstract class IndriProximityWeight extends Weight {
+public abstract class IndriBeliefOpWeight extends Weight {
 
 	private final IndriProximityQuery query;
 	private final ArrayList<Weight> weights;
-	private final int distance;
 	private final String field;
 	private final float boost;
 	private final Similarity similarity;
 	private CollectionStatistics collectionStats;
 	private Similarity.SimScorer simScorer;
 
-	protected IndriProximityWeight(IndriProximityQuery query, IndexSearcher searcher, String field, int distance,
+	protected IndriBeliefOpWeight(IndriProximityQuery query, IndexSearcher searcher, String field,
 			float boost) throws IOException {
 		super(query);
 		this.query = query;
-		this.distance = distance;
 		this.field = field;
 		this.boost = boost;
 		this.similarity = searcher.getSimilarity();
@@ -75,7 +73,7 @@ public abstract class IndriProximityWeight extends Weight {
 			return null;
 		}
 
-		IndriProximityEnum postingsEnum = getProximityIterator(iterators, this.distance);
+		IndriProximityEnum postingsEnum = getProximityIterator(iterators);
 		TermStatistics termStats = postingsEnum.getInvList().getTermStatistics();
 		this.simScorer = similarity.scorer(boost, collectionStats, termStats);
 		LeafSimScorer leafScorer = new LeafSimScorer(simScorer, context.reader(), field, true);
@@ -83,8 +81,16 @@ public abstract class IndriProximityWeight extends Weight {
 		return scorer;
 	}
 
-	protected abstract IndriProximityEnum getProximityIterator(List<IndriDocAndPostingsIterator> iterators,
-			int distance) throws IOException;
+	protected IndriProximityEnum getProximityIterator(List<IndriDocAndPostingsIterator> iterators)
+			throws IOException {
+		IndriInvertedList invList = createInvertedList(iterators);
+		IndriProximityEnum nearPostings = new IndriProximityEnum(invList);
+
+		return nearPostings;
+	}
+	
+	protected abstract IndriInvertedList createInvertedList(List<IndriDocAndPostingsIterator> iterators)
+			throws IOException;
 
 	public String getField() {
 		return field;
