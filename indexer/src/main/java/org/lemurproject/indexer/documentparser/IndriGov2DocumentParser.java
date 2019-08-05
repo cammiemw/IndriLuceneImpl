@@ -26,7 +26,7 @@ import org.lemurproject.indexer.domain.ParsedDocumentField;
 import org.lemurproject.indexer.factory.ConfigurableAnalyzerFactory;
 import org.xml.sax.SAXException;
 
-public class WARCDocumentParser extends DocumentParser {
+public class IndriGov2DocumentParser extends DocumentParser {
 
 	private final static String EXTERNALID_FIELD = "externalId";
 	private final static String ID_FIELD = "internalId";
@@ -43,7 +43,7 @@ public class WARCDocumentParser extends DocumentParser {
 	private List<String> fieldsToIndex;
 	private boolean indexFullText;
 
-	public WARCDocumentParser(IndexingConfiguration options) throws IOException {
+	public IndriGov2DocumentParser(IndexingConfiguration options) throws IOException {
 		// File folder = Paths.get(options.getDataDirectory()).toFile();
 		List<File> files = new ArrayList<>();
 		listFiles(options.getDataDirectory(), files);

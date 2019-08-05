@@ -68,7 +68,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>org.lemurproject.wordentityduet.indexer.index.Indexer</mainClass>
+							<mainClass>org.lemurproject.searcher.IndriSearch</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>

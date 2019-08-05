@@ -1,3 +1,14 @@
+/*
+ * ===============================================================================================
+ * Copyright (c) 2019 Carnegie Mellon University and University of Massachusetts. All Rights
+ * Reserved.
+ *
+ * Use of the Lemur Toolkit for Language Modeling and Information Retrieval is subject to the terms
+ * of the software license set forth in the LICENSE file included with this software, and also
+ * available at http://www.lemurproject.org/license.html
+ *
+ * ================================================================================================
+ */
 package org.lemurproject.searcher;
 
 import java.io.IOException;
@@ -40,13 +51,6 @@ import org.xml.sax.SAXException;
 public class IndriSearch {
 
 	private final static String EXTERNALID_FIELD = "externalId";
-//	private final static String ID_FIELD = "internalId";
-//	private final static String DATE_FIELD = "date";
-//	private final static String SUBJECT_FIELD = "subject";
-//	private final static String TITLE_FIELD = "title";
-//	private final static String BODY_FIELD = "body";
-//
-//	private final static String PARSING_FIELD = "body";
 
 	public static void main(String[] args)
 			throws IOException, ParseException, ParserConfigurationException, SAXException {

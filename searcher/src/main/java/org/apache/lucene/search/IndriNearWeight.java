@@ -1,14 +1,23 @@
+/*
+ * ===============================================================================================
+ * Copyright (c) 2019 Carnegie Mellon University and University of Massachusetts. All Rights
+ * Reserved.
+ *
+ * Use of the Lemur Toolkit for Language Modeling and Information Retrieval is subject to the terms
+ * of the software license set forth in the LICENSE file included with this software, and also
+ * available at http://www.lemurproject.org/license.html
+ *
+ * ================================================================================================
+ */
 package org.apache.lucene.search;
 
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.IndexSearcher;
 import org.lemurproject.searcher.IndriNearQuery;
 
 public class IndriNearWeight extends IndriBeliefOpWeight {
-	
+
 	private final int distance;
 
 	public IndriNearWeight(IndriNearQuery query, IndexSearcher searcher, String field, int distance, float boost)
@@ -18,8 +27,7 @@ public class IndriNearWeight extends IndriBeliefOpWeight {
 	}
 
 	@Override
-	protected IndriInvertedList createInvertedList(List<IndriDocAndPostingsIterator> iterators)
-			throws IOException {
+	protected IndriInvertedList createInvertedList(List<IndriDocAndPostingsIterator> iterators) throws IOException {
 		IndriInvertedList invList = new IndriInvertedList(getField());
 
 		IndriDocAndPostingsIterator iterator0 = iterators.get(0);
@@ -48,8 +56,6 @@ public class IndriNearWeight extends IndriBeliefOpWeight {
 			// Find locations within document
 			boolean locationMatch = true;
 			if (hasDocMatch) {
-				// System.out.println("Current Doc: " + currentDocID + " Freq: " +
-				// ((PostingsEnum) iterator0).freq());
 				int[] numPostings = new int[iterators.size()];
 				int[] nextStartPositions = new int[iterators.size()];
 				int[] nextEndPositions = new int[iterators.size()];
@@ -58,21 +64,14 @@ public class IndriNearWeight extends IndriBeliefOpWeight {
 					nextStartPositions[0] = iterator0.nextPosition();
 					nextEndPositions[0] = iterator0.endPosition();
 					numPostings[0] = i;
-					// System.out.println("0 postion: " + currentDocID + ": " +
-					// nextStartPositions[0]);
 					// Iterate over the remaining terms/clauses in the near
 					for (int j = 1; j < iterators.size(); j++) {
 						IndriDocAndPostingsIterator iteratorj = iterators.get(j);
-						// System.out.println(j + " postion: " + iteratorj.docID() + ": " +
-						// nextStartPositions[j]);
-
 						// Increment the next posting until it is greater than the one before it
 						while (nextStartPositions[j] < nextEndPositions[j - 1] && numPostings[j] < iteratorj.freq()) {
 							nextStartPositions[j] = iteratorj.nextPosition();
 							nextEndPositions[j] = iteratorj.endPosition();
 							numPostings[j]++;
-							// System.out.println(j + " postion: " + iteratorj.docID() + ": " +
-							// nextStartPositions[j]);
 						}
 
 						// Check the distance between term postings
@@ -84,9 +83,7 @@ public class IndriNearWeight extends IndriBeliefOpWeight {
 					// Add the match to the inverted list
 					if (locationMatch) {
 						invList.addPosting(currentDocID, nextStartPositions[0], nextEndPositions[iterators.size() - 1]);
-						// System.out.println("Has match: " + currentDocID + ": " +
-						// nextStartPositions[0]);
-						// Increment position pointers so that matches are not double counted
+
 						for (int j = 1; j < iterators.size(); j++) {
 							IndriDocAndPostingsIterator iteratorj = iterators.get(j);
 							if (numPostings[j] < iteratorj.freq()) {
@@ -105,8 +102,6 @@ public class IndriNearWeight extends IndriBeliefOpWeight {
 
 			currentDocID = iterator0.nextDoc();
 		}
-
-		// System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 		return invList;
 
 	}

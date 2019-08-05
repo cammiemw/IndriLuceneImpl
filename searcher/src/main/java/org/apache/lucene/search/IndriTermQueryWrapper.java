@@ -1,3 +1,14 @@
+/*
+ * ===============================================================================================
+ * Copyright (c) 2019 Carnegie Mellon University and University of Massachusetts. All Rights
+ * Reserved.
+ *
+ * Use of the Lemur Toolkit for Language Modeling and Information Retrieval is subject to the terms
+ * of the software license set forth in the LICENSE file included with this software, and also
+ * available at http://www.lemurproject.org/license.html
+ *
+ * ================================================================================================
+ */
 package org.apache.lucene.search;
 
 import java.io.IOException;
@@ -58,34 +69,6 @@ public class IndriTermQueryWrapper extends Query {
 			}
 		}
 
-//		public CollectionStatistics collectionStatistics(IndexSearcher searcher, String field) throws IOException {
-//			assert field != null;
-//			IndexReader reader = searcher.getIndexReader();
-//			long docCount = 0;
-//			long sumTotalTermFreq = 0;
-//			long sumDocFreq = 0;
-//			for (LeafReaderContext leaf : reader.leaves()) {
-//				final Terms terms = leaf.reader().terms(field);
-//				if (terms == null) {
-//					continue;
-//				}
-//				docCount += terms.getDocCount();
-//				// sumTotalTermFreq += terms.getSumTotalTermFreq();
-//				sumDocFreq += terms.getSumDocFreq();
-//
-//				NumericDocValues numericDocValues = leaf.reader().getNormValues(field);
-//				int nextDoc = numericDocValues.nextDoc();
-//				while (nextDoc != numericDocValues.NO_MORE_DOCS) {
-//					sumTotalTermFreq += numericDocValues.longValue();
-//					nextDoc = numericDocValues.nextDoc();
-//				}
-//			}
-//			if (docCount == 0) {
-//				return null;
-//			}
-//			return new CollectionStatistics(field, reader.maxDoc(), docCount, sumTotalTermFreq, sumDocFreq);
-//		}
-
 		@Override
 		public void extractTerms(Set<Term> terms) {
 			termWeight.extractTerms(terms);
@@ -110,7 +93,6 @@ public class IndriTermQueryWrapper extends Query {
 			final TermsEnum termsEnum = getTermsEnum(context);
 			Scorer termScorer = null;
 			if (termsEnum == null || simScorer == null) {
-				// termScorer = null;
 				return null;
 			}
 			LeafSimScorer scorer = new LeafSimScorer(simScorer, context.reader(), term.field(),
@@ -148,9 +130,6 @@ public class IndriTermQueryWrapper extends Query {
 		}
 
 		private boolean termNotInReader(LeafReader reader, Term term) throws IOException {
-			// only called from assert
-			// System.out.println("TQ.termNotInReader reader=" + reader + " term=" +
-			// field + ":" + bytes.utf8ToString());
 			return reader.docFreq(term) == 0;
 		}
 

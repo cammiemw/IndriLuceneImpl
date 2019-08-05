@@ -46,6 +46,7 @@ public class LuceneDocumentWriter implements DocumentWriter {
 	private Similarity similarity;
 
 	private List<Document> luceneDocs;
+	private Document luceneDoc;
 
 	public LuceneDocumentWriter(IndexingConfiguration options)
 			throws IOException, ClassCastException, ClassNotFoundException {
@@ -58,6 +59,7 @@ public class LuceneDocumentWriter implements DocumentWriter {
 
 		fieldType = getFieldType();
 
+		luceneDoc = new Document();
 		luceneDocs = new ArrayList<>();
 	}
 
@@ -79,6 +81,7 @@ public class LuceneDocumentWriter implements DocumentWriter {
 		IndexWriterConfig config = new IndexWriterConfig(analyzer);
 		config.setOpenMode(OpenMode.CREATE);
 		config.setSimilarity(similarity);
+		config.setUseCompoundFile(false);
 		IndexWriter iwriter = new IndexWriter(directory, config);
 
 		return iwriter;
@@ -94,17 +97,17 @@ public class LuceneDocumentWriter implements DocumentWriter {
 		FieldType fieldType = new FieldType();
 		fieldType.setTokenized(true);
 		fieldType.setStored(true);
-		fieldType.setIndexOptions(org.apache.lucene.index.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+		fieldType.setIndexOptions(org.apache.lucene.index.IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
 		fieldType.setStoreTermVectors(true);
 		fieldType.setStoreTermVectorPositions(true);
-		fieldType.setStoreTermVectorOffsets(true);
+		fieldType.setStoreTermVectorOffsets(false);
 		logger.log(Level.FINE, "Exit");
 		return fieldType;
 	}
 
 	public void writeDocuments(ParsedDocument parsedDoc) throws IOException {
 		if (parsedDoc != null) {
-			Document luceneDoc = new Document();
+			luceneDoc.clear();
 
 			// Add document to search engine
 			for (ParsedDocumentField docField : parsedDoc.getDocumentFields()) {
@@ -118,13 +121,14 @@ public class LuceneDocumentWriter implements DocumentWriter {
 					}
 				}
 			}
-			// iWriter.addDocument(luceneDoc);
-			luceneDocs.add(luceneDoc);
+			iWriter.addDocument(luceneDoc);
+			// luceneDocs.add(luceneDoc);
+
 		}
-		if (luceneDocs.size() >= 500) {
-			iWriter.addDocuments(luceneDocs);
-			luceneDocs = new ArrayList<>();
-		}
+//		if (luceneDocs.size() >= 500) {
+//			iWriter.addDocuments(luceneDocs);
+//			luceneDocs = new ArrayList<>();
+//		}
 	}
 
 	public void closeDocumentWriter() throws IOException {

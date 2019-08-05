@@ -1,8 +1,20 @@
+/*
+ * ===============================================================================================
+ * Copyright (c) 2019 Carnegie Mellon University and University of Massachusetts. All Rights
+ * Reserved.
+ *
+ * Use of the Lemur Toolkit for Language Modeling and Information Retrieval is subject to the terms
+ * of the software license set forth in the LICENSE file included with this software, and also
+ * available at http://www.lemurproject.org/license.html
+ *
+ * ================================================================================================
+ */
 package org.lemurproject.searcher;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
@@ -49,15 +61,21 @@ public abstract class IndriQuery extends Query implements Iterable<BooleanClause
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean equals(Object o) {
+		return sameClassAs(o) && equalsTo(getClass().cast(o));
+	}
+
+	private boolean equalsTo(IndriQuery other) {
+		return clauses.equals(other.clauses);
 	}
 
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		return 0;
+		int hashCode = Objects.hash(clauses);
+		if (hashCode == 0) {
+			hashCode = 1;
+		}
+		return hashCode;
 	}
 
 	@Override

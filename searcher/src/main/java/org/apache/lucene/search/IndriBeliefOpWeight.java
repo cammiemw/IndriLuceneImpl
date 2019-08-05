@@ -1,19 +1,28 @@
+/*
+ * ===============================================================================================
+ * Copyright (c) 2019 Carnegie Mellon University and University of Massachusetts. All Rights
+ * Reserved.
+ *
+ * Use of the Lemur Toolkit for Language Modeling and Information Retrieval is subject to the terms
+ * of the software license set forth in the LICENSE file included with this software, and also
+ * available at http://www.lemurproject.org/license.html
+ *
+ * ================================================================================================
+ */
 package org.apache.lucene.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.similarities.Similarity;
 import org.lemurproject.searcher.IndriProximityQuery;
 
-public abstract class IndriBeliefOpWeight extends Weight {
+public abstract class IndriBeliefOpWeight extends IndriWeight {
 
-	private final IndriProximityQuery query;
+	private static ScoreMode scoreMode = ScoreMode.COMPLETE;
 	private final ArrayList<Weight> weights;
 	private final String field;
 	private final float boost;
@@ -21,37 +30,18 @@ public abstract class IndriBeliefOpWeight extends Weight {
 	private CollectionStatistics collectionStats;
 	private Similarity.SimScorer simScorer;
 
-	protected IndriBeliefOpWeight(IndriProximityQuery query, IndexSearcher searcher, String field,
-			float boost) throws IOException {
-		super(query);
-		this.query = query;
+	protected IndriBeliefOpWeight(IndriProximityQuery query, IndexSearcher searcher, String field, float boost)
+			throws IOException {
+		super(query, searcher, scoreMode, boost);
 		this.field = field;
 		this.boost = boost;
 		this.similarity = searcher.getSimilarity();
 		collectionStats = searcher.collectionStatistics(field);
 		weights = new ArrayList<>();
 		for (BooleanClause c : query) {
-			Weight w = searcher.createWeight(c.getQuery(), ScoreMode.COMPLETE, boost);
+			Weight w = searcher.createWeight(c.getQuery(), scoreMode, boost);
 			weights.add(w);
 		}
-	}
-
-	@Override
-	public boolean isCacheable(LeafReaderContext ctx) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void extractTerms(Set<Term> terms) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public Explanation explain(LeafReaderContext context, int doc) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	protected Scorer getScorer(LeafReaderContext context) throws IOException {
@@ -81,14 +71,13 @@ public abstract class IndriBeliefOpWeight extends Weight {
 		return scorer;
 	}
 
-	protected IndriProximityEnum getProximityIterator(List<IndriDocAndPostingsIterator> iterators)
-			throws IOException {
+	protected IndriProximityEnum getProximityIterator(List<IndriDocAndPostingsIterator> iterators) throws IOException {
 		IndriInvertedList invList = createInvertedList(iterators);
 		IndriProximityEnum nearPostings = new IndriProximityEnum(invList);
 
 		return nearPostings;
 	}
-	
+
 	protected abstract IndriInvertedList createInvertedList(List<IndriDocAndPostingsIterator> iterators)
 			throws IOException;
 

@@ -43,6 +43,9 @@ public class TextDocumentParser extends DocumentParser {
 		files = new File(options.getDataDirectory()).listFiles();
 		docNum = 0;
 		fieldsToIndex = options.getIndexFields();
+		if (fieldsToIndex == null) {
+			fieldsToIndex = new ArrayList<String>();
+		}
 		indexFullText = options.isIndexFullText();
 	}
 

@@ -1,6 +1,6 @@
 /*
  * ===============================================================================================
- * Copyright (c) 2016 Carnegie Mellon University and University of Massachusetts. All Rights
+ * Copyright (c) 2019 Carnegie Mellon University and University of Massachusetts. All Rights
  * Reserved.
  *
  * Use of the Lemur Toolkit for Language Modeling and Information Retrieval is subject to the terms
@@ -22,30 +22,29 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
  */
 public class BaseObject {
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see java.lang.Object#hashCode()
-   */
-  @Override
-  public int hashCode() {
-    return HashCodeBuilder.reflectionHashCode(this);
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return HashCodeBuilder.reflectionHashCode(this);
+	}
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see java.lang.Object#toString()
-   */
-  @Override
-  public String toString() {
-    return ReflectionToStringBuilder.toString(this);
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return ReflectionToStringBuilder.toString(this);
+	}
 
-  @Override
-  public boolean equals(Object obj) {
-    return EqualsBuilder.reflectionEquals(this, obj);
-  }
-
+	@Override
+	public boolean equals(Object obj) {
+		return EqualsBuilder.reflectionEquals(this, obj);
+	}
 
 }
