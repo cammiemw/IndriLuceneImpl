@@ -20,7 +20,7 @@ import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.search.similarities.Similarity;
 import org.lemurproject.searcher.IndriProximityQuery;
 
-public abstract class IndriBeliefOpWeight extends IndriWeight {
+public abstract class IndriTermOpWeight extends IndriWeight {
 
 	private static ScoreMode scoreMode = ScoreMode.COMPLETE;
 	private final ArrayList<Weight> weights;
@@ -30,7 +30,7 @@ public abstract class IndriBeliefOpWeight extends IndriWeight {
 	private CollectionStatistics collectionStats;
 	private Similarity.SimScorer simScorer;
 
-	protected IndriBeliefOpWeight(IndriProximityQuery query, IndexSearcher searcher, String field, float boost)
+	protected IndriTermOpWeight(IndriProximityQuery query, IndexSearcher searcher, String field, float boost)
 			throws IOException {
 		super(query, searcher, scoreMode, boost);
 		this.field = field;
@@ -50,8 +50,8 @@ public abstract class IndriBeliefOpWeight extends IndriWeight {
 			Scorer scorer = w.scorer(context);
 			if (scorer != null) {
 				IndriDocAndPostingsIterator iterator = null;
-				if (scorer.iterator() instanceof IndriProximityEnum) {
-					iterator = ((IndriProximityEnum) scorer.iterator());
+				if (scorer.iterator() instanceof IndriTermOpEnum) {
+					iterator = ((IndriTermOpEnum) scorer.iterator());
 				} else if (scorer.iterator() instanceof PostingsEnum) {
 					iterator = new IndriPostingsEnumWrapper((PostingsEnum) scorer.iterator());
 				}
@@ -63,17 +63,17 @@ public abstract class IndriBeliefOpWeight extends IndriWeight {
 			return null;
 		}
 
-		IndriProximityEnum postingsEnum = getProximityIterator(iterators);
+		IndriTermOpEnum postingsEnum = getProximityIterator(iterators);
 		TermStatistics termStats = postingsEnum.getInvList().getTermStatistics();
 		this.simScorer = similarity.scorer(boost, collectionStats, termStats);
 		LeafSimScorer leafScorer = new LeafSimScorer(simScorer, context.reader(), field, true);
-		Scorer scorer = new IndriProximityScorer(this, postingsEnum, leafScorer);
+		Scorer scorer = new IndriTermOpScorer(this, postingsEnum, leafScorer);
 		return scorer;
 	}
 
-	protected IndriProximityEnum getProximityIterator(List<IndriDocAndPostingsIterator> iterators) throws IOException {
+	protected IndriTermOpEnum getProximityIterator(List<IndriDocAndPostingsIterator> iterators) throws IOException {
 		IndriInvertedList invList = createInvertedList(iterators);
-		IndriProximityEnum nearPostings = new IndriProximityEnum(invList);
+		IndriTermOpEnum nearPostings = new IndriTermOpEnum(invList);
 
 		return nearPostings;
 	}

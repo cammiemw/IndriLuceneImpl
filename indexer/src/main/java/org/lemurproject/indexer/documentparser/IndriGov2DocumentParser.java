@@ -11,9 +11,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.StringJoiner;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.jsoup.Jsoup;
@@ -75,8 +73,7 @@ public class IndriGov2DocumentParser extends DocumentParser {
 		if (fileIterator.hasNext()) {
 			File nextFile = fileIterator.next();
 			InputStream fileStream = new FileInputStream(nextFile);
-			InputStream gzipStream = new GZIPInputStream(fileStream);
-			Reader decoder = new InputStreamReader(gzipStream, "UTF-8");
+			Reader decoder = new InputStreamReader(fileStream, "UTF-8");
 			br = new BufferedReader(decoder);
 		} else {
 			br = null;
@@ -90,7 +87,7 @@ public class IndriGov2DocumentParser extends DocumentParser {
 
 	@Override
 	public ParsedDocument getNextDocument() throws IOException, SAXException {
-		String trecID = "";
+		String docno = "";
 		String url = "";
 		Pattern responsePattern = Pattern.compile("^(HTTP|http)/(1|2)\\.\\d \\d{3}(.|\\s)+$");
 		while (br != null) {
@@ -103,27 +100,28 @@ public class IndriGov2DocumentParser extends DocumentParser {
 			}
 			if (nextLine != null) {
 				docNum++;
-				Matcher matcher;
 
 				StringJoiner docBuffer = null;
 
 				// Get values from header
-				if (nextLine.startsWith("WARC-TREC-ID:")) {
-					trecID = nextLine.split(" ")[1];
-					// isSpam = spamFilter.isSpam(trecID);
+				if (nextLine.startsWith("<DOCNO>")) {
+					docno = nextLine.substring(7, nextLine.length() - 8);
 				}
-				// if (!isSpam) {
 				if (nextLine.startsWith("WARC-Target-URI:")) {
 					url = nextLine.split(" ")[1];
 				}
 
-				matcher = responsePattern.matcher(nextLine);
-				if (matcher.find()) {
+				if (nextLine.equals("<DOCHDR>")) {
 					docBuffer = new StringJoiner("");
+					nextLine = br.readLine();
 					docBuffer.add(nextLine);
+					if (nextLine.startsWith("HTTP") || nextLine.startsWith("http")) {
+						url = nextLine;
+					}
 				}
 
-				while (docBuffer != null && ((nextLine = br.readLine()) != null) && !nextLine.startsWith("WARC/")) {
+				while (docBuffer != null && ((nextLine = br.readLine()) != null) /* && !(nextLine.length() == 6) */
+						&& !nextLine.startsWith("</DOC>")) {
 					// nextLine = nextLine.replaceAll("\\&\\#[0-9]+\\;", "");
 					docBuffer.add(nextLine);
 					docBuffer.add("\n");
@@ -133,29 +131,14 @@ public class IndriGov2DocumentParser extends DocumentParser {
 					try {
 						Document htmlDoc = Jsoup.parse(docBuffer.toString());
 
-						String title = "";
-						Elements titleElements = htmlDoc.getElementsByTag("title");
-						if (titleElements != null && titleElements.size() > 0) {
-							Element element = titleElements.get(0);
-							title = element.toString();
-						}
-
-						Elements headerElements = htmlDoc.getElementsByTag("h1");
-						StringJoiner headersBuffer = new StringJoiner(" ");
-						if (headerElements != null && headerElements.size() > 0) {
-							for (Element headerElement : headerElements) {
-								headersBuffer.add(headerElement.toString());
-							}
-						}
-
-						if (trecID == null || trecID.length() == 0) {
-							trecID = String.valueOf(docNum);
+						if (docno == null || docno.length() == 0) {
+							docno = String.valueOf(docNum);
 						}
 
 						ParsedDocument doc = new ParsedDocument();
 						doc.setDocumentFields(new ArrayList<ParsedDocumentField>());
 
-						ParsedDocumentField externalIdField = new ParsedDocumentField(EXTERNALID_FIELD, trecID, false);
+						ParsedDocumentField externalIdField = new ParsedDocumentField(EXTERNALID_FIELD, docno, false);
 						doc.getDocumentFields().add(externalIdField);
 
 						ParsedDocumentField internalIdField = new ParsedDocumentField(ID_FIELD, String.valueOf(docNum),
@@ -169,11 +152,24 @@ public class IndriGov2DocumentParser extends DocumentParser {
 						}
 
 						if (fieldsToIndex.contains(TITLE_FIELD)) {
+							String title = "";
+							Elements titleElements = htmlDoc.getElementsByTag("title");
+							if (titleElements != null && titleElements.size() > 0) {
+								Element element = titleElements.get(0);
+								title = element.toString();
+							}
 							ParsedDocumentField titleField = new ParsedDocumentField(TITLE_FIELD, title, false);
 							doc.getDocumentFields().add(titleField);
 						}
 
 						if (fieldsToIndex.contains(HEADING_FIELD)) {
+							Elements headerElements = htmlDoc.getElementsByTag("h1");
+							StringJoiner headersBuffer = new StringJoiner(" ");
+							if (headerElements != null && headerElements.size() > 0) {
+								for (Element headerElement : headerElements) {
+									headersBuffer.add(headerElement.toString());
+								}
+							}
 							ParsedDocumentField headingField = new ParsedDocumentField(HEADING_FIELD,
 									headersBuffer.toString(), false);
 							doc.getDocumentFields().add(headingField);
@@ -193,7 +189,7 @@ public class IndriGov2DocumentParser extends DocumentParser {
 
 						return doc;
 					} catch (Exception e) {
-						System.out.println("Could not parse document: " + trecID);
+						System.out.println("Could not parse document: " + docno);
 					}
 				}
 			}

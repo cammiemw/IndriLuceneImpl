@@ -57,6 +57,8 @@ public class IndriQueryParser {
 	private final static String SCOREIFNOT = "scoreifnot";
 	private final static String SYNONYM = "syn";
 
+	private final static String DEFAULT_FIELD = "fulltext";
+
 	private final Analyzer analyzer;
 
 	public IndriQueryParser() {
@@ -371,7 +373,7 @@ public class IndriQueryParser {
 			} else if (operatorQuery.getOperator().equalsIgnoreCase(WINDOW)) {
 				query = new IndriWindowQuery(clauses, operatorQuery.getField(), operatorQuery.getDistance());
 			} else if (operatorQuery.getOperator().equalsIgnoreCase(BAND)) {
-				query = new IndriBandQuery(clauses);
+				query = new IndriBandQuery(clauses, operatorQuery.getField());
 			} else if (operatorQuery.getOperator().equalsIgnoreCase(SCOREIFNOT)) {
 				query = new IndriScoreIfNotQuery(clauses);
 			} else if (operatorQuery.getOperator().equalsIgnoreCase(SCOREIF)) {

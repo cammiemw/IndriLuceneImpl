@@ -287,6 +287,10 @@ public class InspectIndex {
 
 				System.out.println("Corpus statistics:");
 				System.out.println("\tnumdocs\t\t" + reader.numDocs());
+				System.out.println("\tfulltext:\t" + "\tnumdocs=" + reader.getDocCount("fulltext") + "\tsumTotalTF="
+						+ reader.getSumTotalTermFreq("fulltext") + "\tavglen="
+						+ reader.getSumTotalTermFreq("fulltext") / (float) reader.getDocCount("fulltext"));
+
 				System.out.println("\turl:\t" + "\tnumdocs=" + reader.getDocCount("url") + "\tsumTotalTF="
 						+ reader.getSumTotalTermFreq("url") + "\tavglen="
 						+ reader.getSumTotalTermFreq("url") / (float) reader.getDocCount("url"));

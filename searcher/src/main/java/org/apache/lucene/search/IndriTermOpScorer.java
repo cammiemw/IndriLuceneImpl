@@ -13,12 +13,12 @@ package org.apache.lucene.search;
 
 import java.io.IOException;
 
-public class IndriProximityScorer extends Scorer implements SmoothingScorer, WeightedScorer {
+public class IndriTermOpScorer extends Scorer implements SmoothingScorer, WeightedScorer {
 
-	private final IndriProximityEnum postingsEnum;
+	private final IndriTermOpEnum postingsEnum;
 	private final LeafSimScorer docScorer;
 
-	protected IndriProximityScorer(Weight weight, IndriProximityEnum postingsEnum, LeafSimScorer docScorer) {
+	protected IndriTermOpScorer(Weight weight, IndriTermOpEnum postingsEnum, LeafSimScorer docScorer) {
 		super(weight);
 		this.docScorer = docScorer;
 		this.postingsEnum = postingsEnum;

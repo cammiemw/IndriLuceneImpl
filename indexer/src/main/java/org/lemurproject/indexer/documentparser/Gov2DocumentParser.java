@@ -83,10 +83,10 @@ public class Gov2DocumentParser extends DocumentParser {
 					false);
 			doc.getDocumentFields().add(internalIdField);
 
-			if (fieldsToIndex.contains(DATE_FIELD)) {
-				ParsedDocumentField dateField = new ParsedDocumentField(DATE_FIELD, d.getDate(), false);
-				doc.getDocumentFields().add(dateField);
-			}
+//			if (fieldsToIndex.contains(DATE_FIELD)) {
+//				ParsedDocumentField dateField = new ParsedDocumentField(DATE_FIELD, d.getDate(), false);
+//				doc.getDocumentFields().add(dateField);
+//			}
 
 			if (fieldsToIndex.contains(TITLE_FIELD)) {
 				ParsedDocumentField titleField = new ParsedDocumentField(TITLE_FIELD, d.getTitle(), false);

@@ -18,7 +18,7 @@ import java.util.TreeMap;
 
 import org.lemurproject.searcher.IndriWindowQuery;
 
-public class IndriWindowWeight extends IndriBeliefOpWeight {
+public class IndriWindowWeight extends IndriTermOpWeight {
 
 	private final int distance;
 

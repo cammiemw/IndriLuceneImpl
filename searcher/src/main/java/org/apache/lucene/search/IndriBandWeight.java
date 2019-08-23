@@ -14,61 +14,101 @@ package org.apache.lucene.search;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
-import org.apache.lucene.index.LeafReaderContext;
 import org.lemurproject.searcher.IndriBandQuery;
 
-public class IndriBandWeight extends IndriWeight {
+public class IndriBandWeight extends IndriTermOpWeight {
 
-	private final ArrayList<Weight> weights;
-	private final ScoreMode scoreMode;
-	private final float boost;
-
-	public IndriBandWeight(IndriBandQuery query, IndexSearcher searcher, ScoreMode scoreMode, float boost)
-			throws IOException {
-		super(query, searcher, scoreMode, boost);
-		this.boost = boost;
-		this.scoreMode = scoreMode;
-		weights = new ArrayList<>();
-		for (BooleanClause c : query) {
-			Weight w = searcher.createWeight(c.getQuery(), scoreMode, boost);
-			weights.add(w);
-		}
+	public IndriBandWeight(IndriBandQuery query, IndexSearcher searcher, String field, float boost) throws IOException {
+		super(query, searcher, field, boost);
 	}
 
-	private Scorer getScorer(LeafReaderContext context) throws IOException {
-		List<Scorer> subScorers = new ArrayList<>();
+	@Override
+	protected IndriInvertedList createInvertedList(List<IndriDocAndPostingsIterator> iterators) throws IOException {
+		IndriInvertedList invList = new IndriInvertedList(getField());
 
-		for (Weight w : weights) {
-			Scorer scorer = w.scorer(context);
-			if (scorer != null) {
-				subScorers.add(scorer);
+		IndriDocAndPostingsIterator iterator0 = iterators.get(0);
+		iterator0.nextDoc();
+		int currentDocID = iterator0.docID();
+		boolean noMoreDocs = false;
+
+		while (iterator0.docID() != DocIdSetIterator.NO_MORE_DOCS && !noMoreDocs) {
+
+			// Find a document that has all the terms
+			boolean hasDocMatch = true;
+			for (int j = 1; j < iterators.size(); j++) {
+				DocIdSetIterator iteratorj = iterators.get(j);
+				int nextDocID = iteratorj.docID();
+				while (nextDocID < currentDocID) {
+					nextDocID = iteratorj.advance(currentDocID);
+				}
+				if (nextDocID == DocIdSetIterator.NO_MORE_DOCS) {
+					noMoreDocs = true;
+				}
+				if (nextDocID != currentDocID) {
+					hasDocMatch = false;
+				}
 			}
+
+			// Find locations within document
+			if (hasDocMatch) {
+				// Sort all terms in order of start position
+				TreeMap<Integer, TermInformation> sortedTerms = new TreeMap<>();
+				int termNumber = 0;
+				for (IndriDocAndPostingsIterator iterator : iterators) {
+					int numPositions = 0;
+					int previousPosition = -1;
+					while (numPositions < iterator.freq()) {
+						TermInformation termInfo = new TermInformation();
+						termInfo.termNumber = termNumber;
+						termInfo.start = iterator.nextPosition();
+						termInfo.end = iterator.endPosition();
+						termInfo.previousTermPosition = previousPosition;
+
+						sortedTerms.put(Integer.valueOf(termInfo.start), termInfo);
+
+						numPositions++;
+						previousPosition = termInfo.start;
+					}
+					termNumber++;
+				}
+
+				// Loop over all terms
+				List<Integer> sortedTermPositions = new ArrayList<Integer>(sortedTerms.keySet());
+				for (int i = 0; i < sortedTermPositions.size(); i++) {
+					int termsFound = 1;
+					int current;
+
+					for (current = i + 1; current < sortedTermPositions.size()
+							&& termsFound != iterators.size(); current++) {
+						// if the last time this term appeared was before the beginning of this window,
+						// then this is a new term for this window
+						if (sortedTerms.get(sortedTermPositions.get(current)).previousTermPosition < sortedTermPositions
+								.get(i)) {
+							termsFound++;
+						}
+					}
+					if (termsFound == iterators.size()) {
+						invList.addPosting(currentDocID, sortedTerms.get(sortedTermPositions.get(i)).start,
+								sortedTerms.get(sortedTermPositions.get(current - 1)).end);
+					}
+					i = current - 1;
+				}
+			}
+			currentDocID = iterator0.nextDoc();
 		}
 
-		if (subScorers.isEmpty()) {
-			return null;
-		}
-		Scorer scorer = subScorers.get(0);
-		if (subScorers.size() > 1) {
-			scorer = new IndriBandScorer(this, subScorers, scoreMode, this.boost);
-		}
-		return scorer;
+		return invList;
+
 	}
 
-	@Override
-	public Scorer scorer(LeafReaderContext context) throws IOException {
-		return getScorer(context);
-	}
-
-	@Override
-	public BulkScorer bulkScorer(LeafReaderContext context) throws IOException {
-		Scorer scorer = getScorer(context);
-		if (scorer != null) {
-			BulkScorer bulkScorer = new DefaultBulkScorer(scorer);
-			return bulkScorer;
-		}
-		return null;
+	private class TermInformation {
+		public int termNumber;
+		public int start;
+		public int end;
+		public int previousTermPosition;
+		public int weight;
 	}
 
 }

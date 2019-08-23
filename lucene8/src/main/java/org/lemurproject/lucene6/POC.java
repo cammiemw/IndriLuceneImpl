@@ -12,9 +12,8 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.NoLockFactory;
-import org.apache.lucene.store.SimpleFSDirectory;
 
 public class POC {
 
@@ -52,8 +51,9 @@ public class POC {
 	}
 
 	private static IndexWriter createWriter() throws IOException {
-		// Directory dir = FSDirectory.open//FSDirectory.open(Paths.get(INDEX_DIR));
-		FSDirectory dir = new SimpleFSDirectory(Paths.get(INDEX_DIR), NoLockFactory.INSTANCE);
+		Directory dir = FSDirectory.open(Paths.get(INDEX_DIR));
+		// FSDirectory dir = new SimpleFSDirectory(Paths.get(INDEX_DIR),
+		// NoLockFactory.INSTANCE);
 		IndexWriterConfig config = new IndexWriterConfig(new StandardAnalyzer());
 		IndexWriter writer = new IndexWriter(dir, config);
 		return writer;

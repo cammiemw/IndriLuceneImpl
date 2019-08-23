@@ -16,14 +16,14 @@ import java.util.TreeMap;
 
 import org.apache.lucene.util.BytesRef;
 
-public class IndriProximityEnum extends IndriDocAndPostingsIterator {
+public class IndriTermOpEnum extends IndriDocAndPostingsIterator {
 
 	private IndriInvertedList invList;
 	private Integer currentDocID;
 	private int positionIndex;
 	private int endPostion;
 
-	public IndriProximityEnum(IndriInvertedList invList) {
+	public IndriTermOpEnum(IndriInvertedList invList) {
 		this.invList = invList;
 //		if (invList.getDocPostings() != null && invList.getDocPostings().size() > 0) {
 //			currentDocID = invList.getDocPostings().firstKey();

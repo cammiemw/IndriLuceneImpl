@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.lemurproject.searcher.IndriNearQuery;
 
-public class IndriNearWeight extends IndriBeliefOpWeight {
+public class IndriNearWeight extends IndriTermOpWeight {
 
 	private final int distance;
 

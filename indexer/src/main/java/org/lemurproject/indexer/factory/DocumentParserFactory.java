@@ -16,9 +16,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.lemurproject.indexer.documentparser.CARDocumentParser;
+import org.lemurproject.indexer.documentparser.ClueWeb09DocumentParser;
+import org.lemurproject.indexer.documentparser.ClueWeb12DocumentParser;
 import org.lemurproject.indexer.documentparser.DocumentParser;
 import org.lemurproject.indexer.documentparser.Gov2DocumentParser;
+import org.lemurproject.indexer.documentparser.IndriGov2DocumentParser;
 import org.lemurproject.indexer.documentparser.JsonDocumentParser;
+import org.lemurproject.indexer.documentparser.MARCODocumentParser;
 import org.lemurproject.indexer.documentparser.TextDocumentParser;
 import org.lemurproject.indexer.documentparser.WARCDocumentParser;
 import org.lemurproject.indexer.documentparser.WSJDocumentParser;
@@ -43,10 +48,14 @@ public class DocumentParserFactory {
 		docParserMap.put("text", TextDocumentParser.class);
 		docParserMap.put("wsj", WSJDocumentParser.class);
 		docParserMap.put("gov2", Gov2DocumentParser.class);
+		docParserMap.put("indrigov2", IndriGov2DocumentParser.class);
 		docParserMap.put("json", JsonDocumentParser.class);
 		docParserMap.put("wapo", WashingtonPostDocumentParser.class);
 		docParserMap.put("warc", WARCDocumentParser.class);
-		// docParserMap.put("webcrawler", WebCrawlerDocumentParser.class);
+		docParserMap.put("cw09", ClueWeb09DocumentParser.class);
+		docParserMap.put("cw12", ClueWeb12DocumentParser.class);
+		docParserMap.put("car", CARDocumentParser.class);
+		docParserMap.put("marco", MARCODocumentParser.class);
 	}
 
 	public Set<String> getDocumentFormatTypes() {

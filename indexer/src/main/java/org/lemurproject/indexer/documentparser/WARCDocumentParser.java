@@ -19,6 +19,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 import org.lemurproject.indexer.domain.IndexingConfiguration;
 import org.lemurproject.indexer.domain.ParsedDocument;
@@ -42,6 +43,16 @@ public class WARCDocumentParser extends DocumentParser {
 	private Analyzer analyzer;
 	private List<String> fieldsToIndex;
 	private boolean indexFullText;
+
+	Document htmlDoc;
+	ParsedDocument doc;
+	ParsedDocumentField externalIdField;
+	ParsedDocumentField internalIdField;
+	ParsedDocumentField bodyField;
+	ParsedDocumentField titleField;
+	ParsedDocumentField headingField;
+	ParsedDocumentField urlField;
+	ParsedDocumentField fullTextField;
 
 	public WARCDocumentParser(IndexingConfiguration options) throws IOException {
 		// File folder = Paths.get(options.getDataDirectory()).toFile();
@@ -117,13 +128,16 @@ public class WARCDocumentParser extends DocumentParser {
 					url = nextLine.split(" ")[1];
 				}
 
-				matcher = responsePattern.matcher(nextLine);
-				if (matcher.find()) {
-					docBuffer = new StringJoiner("");
-					docBuffer.add(nextLine);
+				if (nextLine.startsWith("h") || nextLine.startsWith("H")) {
+					matcher = responsePattern.matcher(nextLine);
+					if (matcher.find()) {
+						docBuffer = new StringJoiner("");
+						docBuffer.add(nextLine);
+					}
 				}
 
-				while (docBuffer != null && ((nextLine = br.readLine()) != null) && !nextLine.startsWith("WARC/")) {
+				while (docBuffer != null && ((nextLine = br.readLine()) != null) /* && !(nextLine.length() == 9) */
+						&& !nextLine.startsWith("WARC/")) {
 					// nextLine = nextLine.replaceAll("\\&\\#[0-9]+\\;", "");
 					docBuffer.add(nextLine);
 					docBuffer.add("\n");
@@ -131,63 +145,64 @@ public class WARCDocumentParser extends DocumentParser {
 
 				if (docBuffer != null) {
 					try {
-						Document htmlDoc = Jsoup.parse(docBuffer.toString());
-
-						String title = "";
-						Elements titleElements = htmlDoc.getElementsByTag("title");
-						if (titleElements != null && titleElements.size() > 0) {
-							Element element = titleElements.get(0);
-							title = element.toString();
-						}
-
-						Elements headerElements = htmlDoc.getElementsByTag("h1");
-						StringJoiner headersBuffer = new StringJoiner(" ");
-						if (headerElements != null && headerElements.size() > 0) {
-							for (Element headerElement : headerElements) {
-								headersBuffer.add(headerElement.toString());
-							}
-						}
+						htmlDoc = Jsoup.parse(docBuffer.toString());
+						String cleanText = null;
 
 						if (trecID == null || trecID.length() == 0) {
 							trecID = String.valueOf(docNum);
 						}
 
-						ParsedDocument doc = new ParsedDocument();
+						doc = new ParsedDocument();
 						doc.setDocumentFields(new ArrayList<ParsedDocumentField>());
 
-						ParsedDocumentField externalIdField = new ParsedDocumentField(EXTERNALID_FIELD, trecID, false);
+						externalIdField = new ParsedDocumentField(EXTERNALID_FIELD, trecID, false);
 						doc.getDocumentFields().add(externalIdField);
 
-						ParsedDocumentField internalIdField = new ParsedDocumentField(ID_FIELD, String.valueOf(docNum),
-								false);
+						internalIdField = new ParsedDocumentField(ID_FIELD, String.valueOf(docNum), false);
 						doc.getDocumentFields().add(internalIdField);
 
 						if (fieldsToIndex.contains(BODY_FIELD)) {
-							ParsedDocumentField bodyField = new ParsedDocumentField(BODY_FIELD, docBuffer.toString(),
-									false);
+							if (cleanText == null) {
+								cleanText = Jsoup.clean(docBuffer.toString(), Whitelist.simpleText());
+							}
+							bodyField = new ParsedDocumentField(BODY_FIELD, cleanText, false);
 							doc.getDocumentFields().add(bodyField);
 						}
 
 						if (fieldsToIndex.contains(TITLE_FIELD)) {
-							ParsedDocumentField titleField = new ParsedDocumentField(TITLE_FIELD, title, false);
+							String title = "";
+							Elements titleElements = htmlDoc.getElementsByTag("title");
+							if (titleElements != null && titleElements.size() > 0) {
+								Element element = titleElements.get(0);
+								title = element.toString();
+							}
+							titleField = new ParsedDocumentField(TITLE_FIELD, title, false);
 							doc.getDocumentFields().add(titleField);
 						}
 
 						if (fieldsToIndex.contains(HEADING_FIELD)) {
-							ParsedDocumentField headingField = new ParsedDocumentField(HEADING_FIELD,
-									headersBuffer.toString(), false);
+							Elements headerElements = htmlDoc.getElementsByTag("h1");
+							StringJoiner headersBuffer = new StringJoiner(" ");
+							if (headerElements != null && headerElements.size() > 0) {
+								for (Element headerElement : headerElements) {
+									headersBuffer.add(headerElement.toString());
+								}
+							}
+							headingField = new ParsedDocumentField(HEADING_FIELD, headersBuffer.toString(), false);
 							doc.getDocumentFields().add(headingField);
 						}
 
 						if (fieldsToIndex.contains(URL_FIELD)) {
-							ParsedDocumentField urlField = new ParsedDocumentField(URL_FIELD, url, false);
+							urlField = new ParsedDocumentField(URL_FIELD, url, false);
 							doc.getDocumentFields().add(urlField);
 						}
 
 						// Index fullText (catch-all) field
 						if (indexFullText) {
-							ParsedDocumentField fullTextField = new ParsedDocumentField(FULLTEXT_FIELD,
-									docBuffer.toString(), false);
+							if (cleanText == null) {
+								cleanText = Jsoup.clean(docBuffer.toString(), Whitelist.simpleText());
+							}
+							fullTextField = new ParsedDocumentField(FULLTEXT_FIELD, cleanText, false);
 							doc.getDocumentFields().add(fullTextField);
 						}
 

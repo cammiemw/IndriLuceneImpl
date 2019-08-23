@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.lemurproject.searcher.IndriSynonymQuery;
 
-public class IndriSynonymWeight extends IndriBeliefOpWeight {
+public class IndriSynonymWeight extends IndriTermOpWeight {
 
 	public IndriSynonymWeight(IndriSynonymQuery query, IndexSearcher searcher, String field, float boost)
 			throws IOException {

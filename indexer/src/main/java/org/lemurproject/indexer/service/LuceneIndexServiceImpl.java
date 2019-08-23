@@ -55,15 +55,21 @@ public class LuceneIndexServiceImpl implements IndexService {
 		// Parse documents and add annotations
 		System.out.println("Indexing started...");
 		int docCount = 0;
+		ParsedDocument parsedDoc;
+		long endTime = System.currentTimeMillis();
+		long elapsedTime = (endTime - startTime) / 1000;
 		while (docParser.hasNextDocument()) {
-			ParsedDocument parsedDoc = docParser.getNextDocument();
+			parsedDoc = docParser.getNextDocument();
 			if (parsedDoc != null) {
 				docCount++;
 				for (DocumentWriter writer : docWriters) {
 					writer.writeDocuments(parsedDoc);
 				}
-				if (docCount % 100 == 0) {
-					System.out.println(docCount + " documents indexed...");
+				if (docCount % 1000 == 0) {
+					endTime = System.currentTimeMillis();
+					elapsedTime = (endTime - startTime) / 1000;
+					System.out.println(LocalTime.MIN.plusSeconds(elapsedTime).toString() + ": " + docCount
+							+ " documents indexed...");
 				}
 			}
 
@@ -75,8 +81,8 @@ public class LuceneIndexServiceImpl implements IndexService {
 
 		System.out.println("INDEX COMPLETE: " + docCount + " documents indexed");
 
-		long endTime = System.currentTimeMillis();
-		long elapsedTime = (endTime - startTime) / 1000;
+		endTime = System.currentTimeMillis();
+		elapsedTime = (endTime - startTime) / 1000;
 
 		System.out.println("Indexing time: " + LocalTime.MIN.plusSeconds(elapsedTime).toString());
 		logger.log(Level.INFO, "Lucene Indexing time: " + LocalTime.MIN.plusSeconds(elapsedTime).toString());

@@ -1,45 +1,37 @@
-/*
- * ===============================================================================================
- * Copyright (c) 2016 Carnegie Mellon University and University of Massachusetts. All Rights
- * Reserved.
- *
- * Use of the Lemur Toolkit for Language Modeling and Information Retrieval is subject to the terms
- * of the software license set forth in the LICENSE file included with this software, and also
- * available at http://www.lemurproject.org/license.html
- *
- * ================================================================================================
- */
 package org.lemurproject.indexer.documentparser;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.lemurproject.indexer.domain.IndexingConfiguration;
 import org.lemurproject.indexer.domain.ParsedDocument;
 import org.lemurproject.indexer.domain.ParsedDocumentField;
+import org.xml.sax.SAXException;
 
-/**
- * An implementation of the DocumentParser which parser plain text files.
- * 
- * @author cmw2
- *
- *         Dec 1, 2016
- */
-public class TextDocumentParser extends DocumentParser {
+import edu.unh.cs.treccar_v2.Data;
+import edu.unh.cs.treccar_v2.read_data.DeserializeData;
+
+public class CARDocumentParser extends DocumentParser {
 
 	private final static String BODY_FIELD = "body";
 
+	private final FileInputStream stream;
+	private final Iterator<Data.Paragraph> iter;
+
+	private boolean atEOF;
 	private int docNum;
-	private File[] files;
 	private List<String> fieldsToIndex;
 	private boolean indexFullText;
 
-	public TextDocumentParser(IndexingConfiguration options) {
-		files = new File(options.getDataDirectory()).listFiles();
+	public CARDocumentParser(IndexingConfiguration options) throws FileNotFoundException {
+		stream = new FileInputStream(new File(options.getDataDirectory()));
+		iter = DeserializeData.iterableParagraphs(stream).iterator();
+		atEOF = false;
 		docNum = 0;
 		fieldsToIndex = options.getIndexFields();
 		if (fieldsToIndex == null) {
@@ -50,15 +42,19 @@ public class TextDocumentParser extends DocumentParser {
 
 	@Override
 	public boolean hasNextDocument() {
-		if (docNum < files.length) {
+		if (iter.hasNext() || !atEOF) {
 			return true;
 		}
 		return false;
 	}
 
 	@Override
-	public ParsedDocument getNextDocument() throws IOException {
-		String content = new String(Files.readAllBytes(Paths.get(files[docNum].getPath())));
+	public ParsedDocument getNextDocument() throws IOException, SAXException {
+		System.setProperty("file.encoding", "UTF-8");
+		Data.Paragraph p;
+		p = iter.next();
+
+		String content = p.getTextOnly();
 
 		ParsedDocument doc = new ParsedDocument();
 		doc.setDocumentFields(new ArrayList<>());
@@ -66,7 +62,7 @@ public class TextDocumentParser extends DocumentParser {
 		ParsedDocumentField internalIdField = new ParsedDocumentField(INTERNALID_FIELD, String.valueOf(docNum), false);
 		doc.getDocumentFields().add(internalIdField);
 
-		ParsedDocumentField externalIdField = new ParsedDocumentField(EXTERNALID_FIELD, files[docNum].getName(), false);
+		ParsedDocumentField externalIdField = new ParsedDocumentField(EXTERNALID_FIELD, p.getParaId(), false);
 		doc.getDocumentFields().add(externalIdField);
 
 		if (fieldsToIndex.contains(BODY_FIELD)) {
@@ -79,6 +75,10 @@ public class TextDocumentParser extends DocumentParser {
 			ParsedDocumentField fullTextField = new ParsedDocumentField(FULLTEXT_FIELD, content, false);
 			fullTextField.setLength(countTokens(content, FULLTEXT_FIELD));
 			doc.getDocumentFields().add(fullTextField);
+		}
+
+		if (!iter.hasNext()) {
+			atEOF = true;
 		}
 
 		docNum++;

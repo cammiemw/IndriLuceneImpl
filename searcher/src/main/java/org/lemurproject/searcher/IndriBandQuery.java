@@ -20,16 +20,16 @@ import org.apache.lucene.search.IndriBandWeight;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Weight;
 
-public class IndriBandQuery extends IndriQuery {
+public class IndriBandQuery extends IndriProximityQuery {
 
-	public IndriBandQuery(List<BooleanClause> clauses) {
-		super(clauses);
+	public IndriBandQuery(List<BooleanClause> clauses, String field) {
+		super(clauses, field);
 	}
 
 	@Override
 	public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
 		IndriBandQuery query = this;
-		return new IndriBandWeight(query, searcher, scoreMode, boost);
+		return new IndriBandWeight(this, searcher, getField(), boost);
 	}
 
 }

@@ -1,11 +1,10 @@
 <parameters>
-        <index>C://dev//Indexes_Lucene_1.0//toy_testSpeed</index>
+        <index>C:\\dev\\Indexes_Lucene_1.0\\toy_novectors</index>
         <trecFormat>true</trecFormat>
         <rule>dirichlet:2000</rule>
-        <count>1000</count>
-        <query>
-                <type>indri</type>
-                <number> 52 </number>
-                <text>#5(clinton president)</text>
-        </query>
+        <count>100</count>
+  <query>
+    <number> 51 </number>
+    <text>#5(president clinton)</text>
+  </query>
 </parameters>

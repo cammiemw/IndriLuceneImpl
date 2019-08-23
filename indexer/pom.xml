@@ -61,6 +61,11 @@
 			<artifactId>jsoup</artifactId>
 			<version>1.10.3</version>
 		</dependency>
+  	<dependency>
+            <groupId>com.github.TREMA-UNH</groupId>
+            <artifactId>trec-car-tools-java</artifactId>
+            <version>17</version>
+        </dependency>
 	</dependencies>
 	<build>
 		<plugins>

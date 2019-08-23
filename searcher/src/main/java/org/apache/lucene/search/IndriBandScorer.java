@@ -34,7 +34,8 @@ public class IndriBandScorer extends ConjunctionScorer implements WeightedScorer
 			scoreArray.add(tempScore);
 		}
 		double maxScore = Collections.min(scoreArray);
-		return (float) maxScore;
+		return 1.0f;
+		// return (float) maxScore;
 		// return (float) (score / scorers.length);
 	}
 
