@@ -23,11 +23,12 @@ import org.lemurproject.indexer.domain.ParsedDocumentField;
 import org.lemurproject.indexer.factory.ConfigurableAnalyzerFactory;
 import org.xml.sax.SAXException;
 
-public class IndriGov2DocumentParser extends DocumentParser {
+public class TrecTextDocumentParser extends DocumentParser {
 
 	private final static String EXTERNALID_FIELD = "externalId";
 	private final static String ID_FIELD = "internalId";
 	private final static String BODY_FIELD = "body";
+	private final static String TEXT_FIELD = "text";
 	private final static String TITLE_FIELD = "title";
 	private final static String HEADING_FIELD = "heading";
 	private final static String URL_FIELD = "url";
@@ -40,7 +41,7 @@ public class IndriGov2DocumentParser extends DocumentParser {
 	private List<String> fieldsToIndex;
 	private boolean indexFullText;
 
-	public IndriGov2DocumentParser(IndexingConfiguration options) throws IOException {
+	public TrecTextDocumentParser(IndexingConfiguration options) throws IOException {
 		// File folder = Paths.get(options.getDataDirectory()).toFile();
 		List<File> files = new ArrayList<>();
 		listFiles(options.getDataDirectory(), files);
@@ -105,26 +106,28 @@ public class IndriGov2DocumentParser extends DocumentParser {
 				if (nextLine.startsWith("<DOCNO>")) {
 					docno = nextLine.substring(7, nextLine.length() - 8);
 				}
-				if (nextLine.startsWith("WARC-Target-URI:")) {
-					url = nextLine.split(" ")[1];
-				}
 
-				if (nextLine.equals("<DOCHDR>")) {
-					docBuffer = new StringJoiner("");
-					nextLine = br.readLine();
+				if (nextLine.equals("<DOC>")) {
+					docBuffer = new StringJoiner("\n");
 					docBuffer.add(nextLine);
-					if (nextLine.startsWith("HTTP") || nextLine.startsWith("http")) {
-						url = nextLine;
-					}
 				}
 
-				while (docBuffer != null && ((nextLine = br.readLine()) != null) /* && !(nextLine.length() == 6) */
-						&& !nextLine.startsWith("</DOC>")) {
+				StringJoiner textBuffer = null;
+				boolean inText = false;
+				while (docBuffer != null && ((nextLine = br.readLine()) != null) && !nextLine.startsWith("</DOC>")) {
 					// nextLine = nextLine.replaceAll("\\&\\#[0-9]+\\;", "");
 					docBuffer.add(nextLine);
-					docBuffer.add("\n");
+					if (nextLine.equals("<TEXT>")) {
+						textBuffer = new StringJoiner("");
+						inText = true;
+					}
+					if (inText) {
+						textBuffer.add(nextLine);
+					}
+					if (nextLine.equals("</TEXT>")) {
+						inText = false;
+					}
 				}
-
 				if (docBuffer != null) {
 					try {
 						Document htmlDoc = Jsoup.parse(docBuffer.toString());
@@ -143,8 +146,8 @@ public class IndriGov2DocumentParser extends DocumentParser {
 								false);
 						doc.getDocumentFields().add(internalIdField);
 
-						if (fieldsToIndex.contains(BODY_FIELD)) {
-							ParsedDocumentField bodyField = new ParsedDocumentField(BODY_FIELD, docBuffer.toString(),
+						if (fieldsToIndex.contains(BODY_FIELD) || fieldsToIndex.contains(TEXT_FIELD)) {
+							ParsedDocumentField bodyField = new ParsedDocumentField(BODY_FIELD, textBuffer.toString(),
 									false);
 							doc.getDocumentFields().add(bodyField);
 						}

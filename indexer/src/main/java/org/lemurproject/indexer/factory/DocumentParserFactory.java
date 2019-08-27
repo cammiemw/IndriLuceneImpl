@@ -25,6 +25,7 @@ import org.lemurproject.indexer.documentparser.IndriGov2DocumentParser;
 import org.lemurproject.indexer.documentparser.JsonDocumentParser;
 import org.lemurproject.indexer.documentparser.MARCODocumentParser;
 import org.lemurproject.indexer.documentparser.TextDocumentParser;
+import org.lemurproject.indexer.documentparser.TrecTextDocumentParser;
 import org.lemurproject.indexer.documentparser.WARCDocumentParser;
 import org.lemurproject.indexer.documentparser.WSJDocumentParser;
 import org.lemurproject.indexer.documentparser.WashingtonPostDocumentParser;
@@ -56,6 +57,7 @@ public class DocumentParserFactory {
 		docParserMap.put("cw12", ClueWeb12DocumentParser.class);
 		docParserMap.put("car", CARDocumentParser.class);
 		docParserMap.put("marco", MARCODocumentParser.class);
+		docParserMap.put("trectext", TrecTextDocumentParser.class);
 	}
 
 	public Set<String> getDocumentFormatTypes() {
